@@ -1,0 +1,125 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+
+{% block title %}上传文件 - 局域网网盘{% endblock %}
+
+{% block breadcrumb %}
+<nav aria-label="breadcrumb" class="mb-3">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item">
+            <a href="{% url 'storage:file_list' %}">
+                <i class="fas fa-home"></i> 根目录
+            </a>
+        </li>
+        {% if current_folder %}
+        <li class="breadcrumb-item">
+            <a href="{% url 'storage:file_list' folder_id=current_folder.id %}">
+                {{ current_folder.name }}
+            </a>
+        </li>
+        {% endif %}
+        <li class="breadcrumb-item active">上传文件</li>
+    </ol>
+</nav>
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card border-primary">
+            <div class="card-header bg-primary text-white">
+                <h4 class="mb-0">
+                    <i class="fas fa-upload me-2"></i>上传文件
+                    {% if current_folder %}
+                    <small class="fs-6">到 {{ current_folder.name }}</small>
+                    {% endif %}
+                </h4>
+            </div>
+            <div class="card-body">
+                <form method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    
+                    <div class="mb-4">
+                        <label for="file" class="form-label">选择文件</label>
+                        <input type="file" class="form-control" id="file" name="file" multiple required>
+                        <div class="form-text">
+                            支持多文件上传，无文件类型和大小限制
+                        </div>
+                    </div>
+                    
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>
+                        文件将上传到：
+                        <strong>
+                            {% if current_folder %}
+                            {{ current_folder.path }}/
+                            {% else %}
+                            根目录
+                            {% endif %}
+                        </strong>
+                    </div>
+                    
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <a href="{% url 'storage:file_list' %}{% if current_folder %}folder/{{ current_folder.id }}/{% endif %}" 
+                           class="btn btn-secondary me-md-2">
+                            <i class="fas fa-times me-1"></i>取消
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-upload me-1"></i>开始上传
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <div class="card mt-4">
+            <div class="card-body">
+                <h5><i class="fas fa-lightbulb text-warning me-2"></i>上传提示</h5>
+                <ul class="mb-0">
+                    <li>支持同时上传多个文件</li>
+                    <li>无文件类型限制，可以上传任何类型的文件</li>
+                    <li>无文件大小限制，但请注意网络传输时间</li>
+                    <li>上传过程中请勿关闭页面</li>
+                    <li>大文件上传可能需要较长时间，请耐心等待</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // 显示选中的文件名
+    document.getElementById('file').addEventListener('change', function(e) {
+        const files = e.target.files;
+        const fileList = document.getElementById('file-list');
+        
+        if (!fileList) {
+            const fileListDiv = document.createElement('div');
+            fileListDiv.id = 'file-list';
+            fileListDiv.className = 'mt-3';
+            this.parentNode.appendChild(fileListDiv);
+        }
+        
+        if (files.length > 0) {
+            let html = '<div class="alert alert-success"><h6>已选择文件：</h6><ul class="mb-0">';
+            for (let i = 0; i < files.length; i++) {
+                html += `<li>${files[i].name} (${formatFileSize(files[i].size)})</li>`;
+            }
+            html += '</ul></div>';
+            document.getElementById('file-list').innerHTML = html;
+        } else {
+            document.getElementById('file-list').innerHTML = '';
+        }
+    });
+    
+    function formatFileSize(bytes) {
+        if (bytes === 0) return '0 B';
+        const k = 1024;
+        const sizes = ['B', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    }
+</script>
+{% endblock %}

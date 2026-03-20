@@ -1,0 +1,105 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+
+{% block title %}新建文件夹 - 局域网网盘{% endblock %}
+
+{% block breadcrumb %}
+<nav aria-label="breadcrumb" class="mb-3">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item">
+            <a href="{% url 'storage:file_list' %}">
+                <i class="fas fa-home"></i> 根目录
+            </a>
+        </li>
+        {% if parent_folder %}
+        <li class="breadcrumb-item">
+            <a href="{% url 'storage:file_list' folder_id=parent_folder.id %}">
+                {{ parent_folder.name }}
+            </a>
+        </li>
+        {% endif %}
+        <li class="breadcrumb-item active">新建文件夹</li>
+    </ol>
+</nav>
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card border-primary">
+            <div class="card-header bg-primary text-white">
+                <h4 class="mb-0">
+                    <i class="fas fa-folder-plus me-2"></i>新建文件夹
+                    {% if parent_folder %}
+                    <small class="fs-6">在 {{ parent_folder.name }} 中</small>
+                    {% endif %}
+                </h4>
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    
+                    <div class="mb-3">
+                        <label for="id_name" class="form-label">文件夹名称</label>
+                        <input type="text" class="form-control" id="id_name" name="name" 
+                               required autofocus placeholder="输入文件夹名称">
+                        <div class="form-text">
+                            文件夹名称不能包含特殊字符：\/:*?"<>|
+                        </div>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label for="id_parent" class="form-label">父文件夹</label>
+                        <select class="form-select" id="id_parent" name="parent">
+                            <option value="">根目录</option>
+                            {% for folder in form.parent.field.queryset %}
+                            <option value="{{ folder.id }}" {% if folder.id == parent_folder.id %}selected{% endif %}>
+                                {{ folder.path }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                        <div class="form-text">
+                            选择父文件夹，留空则创建在根目录
+                        </div>
+                    </div>
+                    
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>
+                        文件夹将创建在：
+                        <strong>
+                            {% if parent_folder %}
+                            {{ parent_folder.path }}/
+                            {% else %}
+                            根目录
+                            {% endif %}
+                        </strong>
+                    </div>
+                    
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <a href="{% url 'storage:file_list' %}{% if parent_folder %}folder/{{ parent_folder.id }}/{% endif %}" 
+                           class="btn btn-secondary me-md-2">
+                            <i class="fas fa-times me-1"></i>取消
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-folder-plus me-1"></i>创建文件夹
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <div class="card mt-4">
+            <div class="card-body">
+                <h5><i class="fas fa-lightbulb text-warning me-2"></i>文件夹命名建议</h5>
+                <ul class="mb-0">
+                    <li>使用有意义的名称，便于识别</li>
+                    <li>避免使用特殊字符</li>
+                    <li>同一文件夹内不能有同名文件夹</li>
+                    <li>建议使用中文、英文或数字组合</li>
+                    <li>名称长度建议在1-255个字符之间</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

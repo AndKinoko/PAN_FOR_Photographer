@@ -1,0 +1,551 @@
+
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+
+{% block title %}文件列表 - 局域网网盘{% endblock %}
+
+{% block breadcrumb %}
+<nav aria-label="breadcrumb" class="mb-3">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item">
+            <a href="{% url 'storage:file_list' %}">
+                <i class="fas fa-home"></i> 根目录
+            </a>
+        </li>
+        {% for folder in breadcrumbs %}
+        <li class="breadcrumb-item">
+            <a href="{% url 'storage:file_list' folder_id=folder.id %}">
+                {{ folder.name }}
+            </a>
+        </li>
+        {% endfor %}
+    </ol>
+</nav>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .preview-container {
+        position: sticky;
+        top: 20px;
+        height: calc(100vh - 150px);
+        overflow-y: auto;
+    }
+    .preview-image {
+        max-width: 100%;
+        max-height: 500px;
+        object-fit: contain;
+        border-radius: 8px;
+    }
+    .preview-video {
+        width: 100%;
+        max-height: 500px;
+        border-radius: 8px;
+    }
+    .file-row {
+        cursor: pointer;
+        transition: background-color 0.2s;
+    }
+    .file-row:hover {
+        background-color: rgba(0, 123, 255, 0.05) !important;
+    }
+    .file-row.selected {
+        background-color: rgba(0, 123, 255, 0.1) !important;
+    }
+    .preview-placeholder {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: 300px;
+        color: #6c757d;
+    }
+    .preview-placeholder i {
+        font-size: 4rem;
+        margin-bottom: 1rem;
+    }
+    .preview-info {
+        background-color: #f8f9fa;
+        border-radius: 8px;
+        padding: 1rem;
+        margin-top: 1rem;
+    }
+    .preview-actions {
+        margin-top: 1rem;
+    }
+    .preview-btn {
+        position: relative;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>
+        <i class="fas fa-folder-open text-warning me-2"></i>
+        {% if current_folder %}
+            {{ current_folder.name }}
+        {% else %}
+            我的文件
+        {% endif %}
+    </h2>
+    
+    <div class="btn-group">
+        <a href="{% url 'storage:file_upload' %}{% if current_folder %}folder/{{ current_folder.id }}/{% endif %}" 
+           class="btn btn-primary">
+            <i class="fas fa-upload me-1"></i>上传文件
+        </a>
+        <a href="{% url 'storage:folder_create' %}{% if current_folder %}{{ current_folder.id }}/{% endif %}" 
+           class="btn btn-success">
+            <i class="fas fa-folder-plus me-1"></i>新建文件夹
+        </a>
+    </div>
+</div>
+
+<div class="row">
+    <!-- 左侧文件列表 -->
+    <div class="col-lg-7 col-xl-7 mb-4">
+        <!-- Folders -->
+        {% if folders %}
+        <div class="row mb-4">
+            <div class="col-12">
+                <h5 class="mb-3"><i class="fas fa-folder text-warning me-2"></i>文件夹</h5>
+                <div class="row">
+                    {% for folder in folders %}
+                    <div class="col-md-3 col-sm-4 col-6 mb-3">
+                        <div class="card folder-item h-100">
+                            <div class="card-body text-center">
+                                <div class="folder-icon mb-2">
+                                    <i class="fas fa-folder fa-3x"></i>
+                                </div>
+                                <h6 class="card-title text-truncate" title="{{ folder.name }}">
+                                    {{ folder.name }}
+                                </h6>
+                                <p class="text-muted small mb-2">
+                                    {{ folder.created_at|date:"Y-m-d" }}
+                                </p>
+                                <div class="btn-group btn-group-sm">
+                                    <a href="{% url 'storage:file_list' folder_id=folder.id %}" 
+                                       class="btn btn-outline-primary">
+                                        <i class="fas fa-folder-open"></i>
+                                    </a>
+                                    <a href="{% url 'storage:folder_delete' folder_id=folder.id %}" 
+                                       class="btn btn-outline-danger"
+                                       onclick="return confirm('确定要删除文件夹 {{ folder.name }} 吗？这将删除文件夹内的所有文件。')">
+                                        <i class="fas fa-trash"></i>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Files -->
+        {% if files %}
+        <div class="row">
+            <div class="col-12">
+                <h5 class="mb-3"><i class="fas fa-file text-primary me-2"></i>文件</h5>
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead class="table-light">
+                            <tr>
+                                <th>文件名</th>
+                                <th>类型</th>
+                                <th>大小</th>
+                                <th>上传时间</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for file in files %}
+                            <tr class="file-row" data-file-id="{{ file.id }}" 
+                                data-file-name="{{ file.name }}"
+                                data-file-type="{{ file.file_type }}"
+                                data-file-url="{{ file.file.url }}"
+                                data-preview-url="{% if file.preview %}{{ file.preview.url }}{% else %}{{ file.file.url }}{% endif %}"
+                                data-file-size="{{ file.formatted_size }}"
+                                data-file-uploaded="{{ file.uploaded_at|date:'Y-m-d H:i' }}">
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <div class="file-icon me-3">
+                                            {% if file.file_type == 'pdf' %}
+                                            <i class="fas fa-file-pdf text-danger"></i>
+                                            {% elif file.file_type in 'jpg,jpeg,png,gif,bmp,webp,tiff,tif' %}
+                                            <i class="fas fa-file-image text-success"></i>
+                                            {% elif file.file_type in 'nef,cr2,cr3,crw,arw,sr2,srf,dng,raf,orf,rw2,nrw' %}
+                                            <i class="fas fa-camera text-info"></i>
+                                            {% elif file.file_type in 'mp4,avi,mov,wmv,flv,mkv,webm' %}
+                                            <i class="fas fa-file-video text-info"></i>
+                                            {% elif file.file_type in 'doc,docx' %}
+                                            <i class="fas fa-file-word text-primary"></i>
+                                            {% elif file.file_type in 'xls,xlsx' %}
+                                            <i class="fas fa-file-excel text-success"></i>
+                                            {% elif file.file_type in 'zip,rar,7z' %}
+                                            <i class="fas fa-file-archive text-warning"></i>
+                                            {% else %}
+                                            <i class="fas fa-file text-secondary"></i>
+                                            {% endif %}
+                                        </div>
+                                        <div>
+                                            <div class="fw-bold">{{ file.name }}</div>
+                                            <small class="text-muted">原名: {{ file.original_name }}</small>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="badge bg-secondary">{{ file.file_type|upper }}</span>
+                                </td>
+                                <td>{{ file.formatted_size }}</td>
+                                <td>{{ file.uploaded_at|date:"Y-m-d H:i" }}</td>
+                                <td>
+                                    <div class="btn-group btn-group-sm">
+                                        <a href="{% url 'storage:file_download' file_id=file.id %}" 
+                                           class="btn btn-outline-primary" title="下载">
+                                            <i class="fas fa-download"></i>
+                                        </a>
+                                        <button class="btn btn-outline-info preview-btn" title="预览"
+                                                data-file-id="{{ file.id }}"
+                                                data-file-url="{{ file.file.url }}"
+                                                data-preview-url="{% if file.preview %}{{ file.preview.url }}{% else %}{{ file.file.url }}{% endif %}"
+                                                data-file-type="{{ file.file_type }}"
+                                                data-file-name="{{ file.name }}">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                        <a href="{% url 'share:create_share' file_id=file.id %}" 
+                                           class="btn btn-outline-success" title="分享">
+                                            <i class="fas fa-share-alt"></i>
+                                        </a>
+                                        <a href="{% url 'storage:file_delete' file_id=file.id %}" 
+                                           class="btn btn-outline-danger" title="删除"
+                                           onclick="return confirm('确定要删除文件 {{ file.name }} 吗？')">
+                                            <i class="fas fa-trash"></i>
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        {% else %}
+        <!-- Empty state -->
+        {% if not folders %}
+        <div class="text-center py-5">
+            <div class="mb-4">
+                <i class="fas fa-cloud-upload-alt fa-5x text-muted"></i>
+            </div>
+            <h4 class="text-muted mb-3">当前文件夹为空</h4>
+            <p class="text-muted mb-4">上传文件或创建文件夹开始使用</p>
+            <div class="d-flex justify-content-center gap-3">
+                <a href="{% url 'storage:file_upload' %}{% if current_folder %}folder/{{ current_folder.id }}/{% endif %}" 
+                   class="btn btn-primary btn-lg">
+                    <i class="fas fa-upload me-2"></i>上传文件
+                </a>
+                <a href="{% url 'storage:folder_create' %}{% if current_folder %}{{ current_folder.id }}/{% endif %}" 
+                   class="btn btn-success btn-lg">
+                    <i class="fas fa-folder-plus me-2"></i>新建文件夹
+                </a>
+            </div>
+        </div>
+        {% endif %}
+        {% endif %}
+    </div>
+
+    <!-- 右侧预览窗口 -->
+    <div class="col-lg-5 col-xl-5">
+        <div class="card shadow-sm preview-container">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0"><i class="fas fa-eye me-2"></i>文件预览</h5>
+            </div>
+            <div class="card-body">
+                <div id="preview-content">
+                    <!-- 初始占位符 -->
+                    <div class="preview-placeholder">
+                        <i class="fas fa-mouse-pointer text-muted"></i>
+                        <h5>选择文件进行预览</h5>
+                        <p class="text-center small">点击左侧的文件行或预览按钮可以预览图片或视频</p>
+                    </div>
+                </div>
+                
+                <div id="preview-info" class="preview-info" style="display: none;">
+                    <h6>文件信息</h6>
+                    <table class="table table-sm table-borderless mb-0">
+                        <tr>
+                            <td class="text-nowrap"><strong>文件名:</strong></td>
+                            <td id="info-name" class="text-break">-</td>
+                        </tr>
+                        <tr>
+                            <td class="text-nowrap"><strong>文件类型:</strong></td>
+                            <td id="info-type">-</td>
+                        </tr>
+                        <tr>
+                            <td class="text-nowrap"><strong>文件大小:</strong></td>
+                            <td id="info-size">-</td>
+                        </tr>
+                        <tr>
+                            <td class="text-nowrap"><strong>上传时间:</strong></td>
+                            <td id="info-uploaded">-</td>
+                        </tr>
+                    </table>
+                </div>
+                
+                <div id="preview-actions" class="preview-actions" style="display: none;">
+                    <a href="#" id="download-btn" class="btn btn-primary btn-sm w-100 mb-2">
+                        <i class="fas fa-download me-1"></i>下载文件
+                    </a>
+                    <a href="#" id="share-btn" class="btn btn-success btn-sm w-100 mb-2">
+                        <i class="fas fa-share-alt me-1"></i>分享文件
+                    </a>
+                    <a href="#" id="delete-btn" class="btn btn-outline-danger btn-sm w-100">
+                        <i class="fas fa-trash me-1"></i>删除文件
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log('预览功能初始化...');
+        
+        // 获取DOM元素
+        const fileRows = document.querySelectorAll('.file-row');
+        const previewButtons = document.querySelectorAll('.preview-btn');
+        const previewContent = document.getElementById('preview-content');
+        const previewInfo = document.getElementById('preview-info');
+        const previewActions = document.getElementById('preview-actions');
+        const downloadBtn = document.getElementById('download-btn');
+        const shareBtn = document.getElementById('share-btn');
+        const deleteBtn = document.getElementById('delete-btn');
+        
+        // 图片文件类型（包括RAW格式）
+        const imageTypes = ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp', 'tiff', 'tif'];
+        // RAW文件类型
+        const rawTypes = ['nef', 'cr2', 'cr3', 'crw', 'arw', 'sr2', 'srf', 'dng', 'raf', 'orf', 'rw2', 'nrw'];
+        // 视频文件类型
+        const videoTypes = ['mp4', 'avi', 'mov', 'wmv', 'flv', 'mkv', 'webm'];
+        
+        // 当前选中的文件行
+        let selectedRow = null;
+        
+        // 显示加载状态
+        function showLoading() {
+            previewContent.innerHTML = `
+                <div class="preview-placeholder">
+                    <div class="spinner-border text-primary mb-3" role="status">
+                        <span class="visually-hidden">加载中...</span>
+                    </div>
+                    <h5>加载中...</h5>
+                    <p class="text-center small">正在加载文件预览</p>
+                </div>
+            `;
+        }
+        
+        // 显示错误
+        function showError(message) {
+            previewContent.innerHTML = `
+                <div class="preview-placeholder">
+                    <i class="fas fa-exclamation-triangle text-danger"></i>
+                    <h5>预览失败</h5>
+                    <p class="text-center small">${message}</p>
+                </div>
+            `;
+        }
+        
+        // 显示不支持的文件类型
+        function showUnsupported(fileType) {
+            previewContent.innerHTML = `
+                <div class="preview-placeholder">
+                    <i class="fas fa-file text-secondary"></i>
+                    <h5>不支持预览</h5>
+                    <p class="text-center small">${fileType.toUpperCase()} 格式的文件无法预览</p>
+                    <p class="text-center small">请下载后查看</p>
+                </div>
+            `;
+        }
+        
+        // 显示初始状态
+        function showInitial() {
+            previewContent.innerHTML = `
+                <div class="preview-placeholder">
+                    <i class="fas fa-mouse-pointer text-muted"></i>
+                    <h5>选择文件进行预览</h5>
+                    <p class="text-center small">点击左侧的文件行或预览按钮可以预览图片或视频</p>
+                </div>
+            `;
+            previewInfo.style.display = 'none';
+            previewActions.style.display = 'none';
+        }
+        
+        // 预览文件
+        function previewFile(fileId, fileName, fileType, fileUrl, previewUrl, fileSize, fileUploaded) {
+            console.log('预览文件:', { fileId, fileName, fileType, fileUrl, previewUrl });
+            
+            // 更新文件信息
+            document.getElementById('info-name').textContent = fileName;
+            document.getElementById('info-type').textContent = fileType.toUpperCase();
+            document.getElementById('info-size').textContent = fileSize;
+            document.getElementById('info-uploaded').textContent = fileUploaded;
+            
+            // 更新操作按钮
+            downloadBtn.href = `/storage/download/${fileId}/`;
+            shareBtn.href = `/share/create/${fileId}/`;
+            deleteBtn.href = `/storage/delete/${fileId}/`;
+            deleteBtn.onclick = function() {
+                return confirm(`确定要删除文件 ${fileName} 吗？`);
+            };
+            
+            // 显示加载状态
+            showLoading();
+            
+            // 显示信息和操作按钮
+            previewInfo.style.display = 'block';
+            previewActions.style.display = 'block';
+            
+            // 根据文件类型显示预览
+            const lowerFileType = fileType.toLowerCase();
+            
+            if (imageTypes.includes(lowerFileType) || rawTypes.includes(lowerFileType)) {
+                // 图片或RAW文件预览
+                const img = document.createElement('img');
+                img.src = previewUrl;
+                img.alt = fileName;
+                img.className = 'preview-image';
+                img.onload = function() {
+                    console.log('图片加载成功');
+                    previewContent.innerHTML = '';
+                    previewContent.appendChild(img);
+                };
+                img.onerror = function() {
+                    console.error('图片加载失败:', previewUrl);
+                    showError('无法加载图片，文件可能不存在或格式不支持');
+                };
+                previewContent.innerHTML = '';
+                previewContent.appendChild(img);
+            } else if (videoTypes.includes(lowerFileType)) {
+                // 视频预览
+                const video = document.createElement('video');
+                video.src = fileUrl;
+                video.controls = true;
+                video.className = 'preview-video';
+                video.preload = 'metadata';
+                
+                const source = document.createElement('source');
+                source.src = fileUrl;
+                source.type = `video/${lowerFileType}`;
+                video.appendChild(source);
+                
+                video.onloadeddata = function() {
+                    console.log('视频加载成功');
+                    previewContent.innerHTML = '';
+                    previewContent.appendChild(video);
+                };
+                
+                video.onerror = function() {
+                    console.error('视频加载失败:', fileUrl);
+                    showError('无法播放视频，文件可能不存在或格式不支持');
+                };
+                
+                previewContent.innerHTML = '';
+                previewContent.appendChild(video);
+            } else {
+                // 不支持预览的文件类型
+                showUnsupported(fileType);
+            }
+        }
+        
+        // 选择文件行
+        function selectFileRow(row) {
+            // 移除之前选中的行的样式
+            if (selectedRow) {
+                selectedRow.classList.remove('selected');
+            }
+            
+            // 添加当前选中行的样式
+            row.classList.add('selected');
+            selectedRow = row;
+            
+            // 获取文件数据
+            const fileId = row.dataset.fileId;
+            const fileName = row.dataset.fileName;
+            const fileType = row.dataset.fileType;
+            const fileUrl = row.dataset.fileUrl;
+            const previewUrl = row.dataset.previewUrl || fileUrl;
+            const fileSize = row.dataset.fileSize;
+            const fileUploaded = row.dataset.fileUploaded;
+            
+            // 预览文件
+            previewFile(fileId, fileName, fileType, fileUrl, previewUrl, fileSize, fileUploaded);
+        }
+        
+        // 为文件行添加点击事件
+        fileRows.forEach(function(row) {
+            row.addEventListener('click', function(e) {
+                // 如果点击的是按钮，不触发文件行选择
+                if (e.target.closest('button') || e.target.closest('a')) {
+                    return;
+                }
+                selectFileRow(row);
+            });
+        });
+        
+        // 为预览按钮添加点击事件
+        previewButtons.forEach(function(button) {
+            button.addEventListener('click', function(e) {
+                e.stopPropagation();
+                const fileId = button.dataset.fileId;
+                const fileName = button.dataset.fileName;
+                const fileType = button.dataset.fileType;
+                const fileUrl = button.dataset.fileUrl;
+                const previewUrl = button.dataset.previewUrl || fileUrl;
+                
+                // 找到对应的文件行
+                const row = document.querySelector('.file-row[data-file-id="' + fileId + '"]');
+                if (row) {
+                    selectFileRow(row);
+                } else {
+                    // 如果没有找到对应的行，直接预览
+                    previewFile(fileId, fileName, fileType, fileUrl, previewUrl, '未知大小', '未知时间');
+                }
+            });
+        });
+        
+        // 添加键盘导航支持
+        document.addEventListener('keydown', function(e) {
+            if (!selectedRow) return;
+            
+            const rows = Array.from(fileRows);
+            const currentIndex = rows.indexOf(selectedRow);
+            
+            if (e.key === 'ArrowDown' && currentIndex < rows.length - 1) {
+                e.preventDefault();
+                selectFileRow(rows[currentIndex + 1]);
+            } else if (e.key === 'ArrowUp' && currentIndex > 0) {
+                e.preventDefault();
+                selectFileRow(rows[currentIndex - 1]);
+            } else if (e.key === 'Escape') {
+                showInitial();
+                if (selectedRow) {
+                    selectedRow.classList.remove('selected');
+                    selectedRow = null;
+                }
+            } else if (e.key === 'Enter' && selectedRow) {
+                // 触发下载
+                const fileId = selectedRow.dataset.fileId;
+                window.location.href = '/storage/download/' + fileId + '/';
+            }
+        });
+        
+        console.log('预览功能初始化完成');
+    });
+</script>
+{% endblock %}

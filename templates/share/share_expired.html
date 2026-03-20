@@ -1,0 +1,46 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}分享已过期 - 局域网网盘{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-6 offset-md-3">
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="mb-0">分享链接已过期</h4>
+                </div>
+                <div class="card-body text-center">
+                    <div class="mb-4">
+                        <i class="bi bi-clock-history display-1 text-warning"></i>
+                    </div>
+                    
+                    <h5 class="card-title">抱歉，此分享链接已过期</h5>
+                    <p class="card-text">
+                        您尝试访问的分享链接已经过期，无法继续访问。
+                    </p>
+                    
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle"></i>
+                        分享链接信息：
+                        <ul class="list-unstyled mt-2">
+                            <li>文件名：<strong>{{ share.file.original_name }}</strong></li>
+                            <li>过期时间：{{ share.expires_at|date:"Y-m-d H:i" }}</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="mt-4">
+                        <a href="{% url 'accounts:login' %}" class="btn btn-primary">
+                            <i class="bi bi-box-arrow-in-right"></i> 登录系统
+                        </a>
+                        <a href="/" class="btn btn-outline-secondary ms-2">
+                            <i class="bi bi-house"></i> 返回首页
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

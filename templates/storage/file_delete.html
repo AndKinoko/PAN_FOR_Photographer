@@ -1,0 +1,99 @@
+{% extends 'base.html' %}
+
+{% block title %}删除文件 - 局域网网盘{% endblock %}
+
+{% block breadcrumb %}
+<nav aria-label="breadcrumb" class="mb-3">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item">
+            <a href="{% url 'storage:file_list' %}">
+                <i class="fas fa-home"></i> 根目录
+            </a>
+        </li>
+        {% if file.folder %}
+        <li class="breadcrumb-item">
+            <a href="{% url 'storage:file_list' folder_id=file.folder.id %}">
+                {{ file.folder.name }}
+            </a>
+        </li>
+        {% endif %}
+        <li class="breadcrumb-item active">删除文件</li>
+    </ol>
+</nav>
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card border-danger">
+            <div class="card-header bg-danger text-white">
+                <h4 class="mb-0"><i class="fas fa-trash-alt me-2"></i>确认删除文件</h4>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-warning">
+                    <h5 class="alert-heading">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        警告：此操作不可撤销！
+                    </h5>
+                    <p class="mb-0">您确定要删除以下文件吗？文件删除后将无法恢复。</p>
+                </div>
+                
+                <div class="card mb-4">
+                    <div class="card-body">
+                        <div class="d-flex align-items-center">
+                            <div class="file-icon me-3">
+                                {% if file.file_type == 'pdf' %}
+                                <i class="fas fa-file-pdf fa-3x text-danger"></i>
+                                {% elif file.file_type in 'jpg,jpeg,png,gif,bmp' %}
+                                <i class="fas fa-file-image fa-3x text-success"></i>
+                                {% elif file.file_type in 'doc,docx' %}
+                                <i class="fas fa-file-word fa-3x text-primary"></i>
+                                {% elif file.file_type in 'xls,xlsx' %}
+                                <i class="fas fa-file-excel fa-3x text-success"></i>
+                                {% elif file.file_type in 'zip,rar,7z' %}
+                                <i class="fas fa-file-archive fa-3x text-warning"></i>
+                                {% else %}
+                                <i class="fas fa-file fa-3x text-secondary"></i>
+                                {% endif %}
+                            </div>
+                            <div>
+                                <h5 class="mb-1">{{ file.name }}</h5>
+                                <p class="text-muted mb-1">原名: {{ file.original_name }}</p>
+                                <p class="text-muted mb-1">类型: {{ file.file_type|upper }}</p>
+                                <p class="text-muted mb-0">大小: {{ file.formatted_size }}</p>
+                                <p class="text-muted mb-0">上传时间: {{ file.uploaded_at|date:"Y-m-d H:i" }}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <form method="post">
+                    {% csrf_token %}
+                    
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <a href="{% url 'storage:file_list' %}{% if file.folder %}folder/{{ file.folder.id }}/{% endif %}" 
+                           class="btn btn-secondary me-md-2">
+                            <i class="fas fa-times me-1"></i>取消
+                        </a>
+                        <button type="submit" class="btn btn-danger">
+                            <i class="fas fa-trash-alt me-1"></i>确认删除
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <div class="card mt-4">
+            <div class="card-body">
+                <h6><i class="fas fa-info-circle text-primary me-2"></i>删除说明</h6>
+                <ul class="mb-0">
+                    <li>文件将从服务器永久删除</li>
+                    <li>删除操作不可撤销</li>
+                    <li>如果文件已被分享，分享链接将失效</li>
+                    <li>建议在删除前确认文件不再需要</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

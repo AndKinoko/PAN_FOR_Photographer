@@ -1,0 +1,128 @@
+{% extends 'base.html' %}
+
+{% block title %}删除文件夹 - 局域网网盘{% endblock %}
+
+{% block breadcrumb %}
+<nav aria-label="breadcrumb" class="mb-3">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item">
+            <a href="{% url 'storage:file_list' %}">
+                <i class="fas fa-home"></i> 根目录
+            </a>
+        </li>
+        {% if folder.parent %}
+        <li class="breadcrumb-item">
+            <a href="{% url 'storage:file_list' folder_id=folder.parent.id %}">
+                {{ folder.parent.name }}
+            </a>
+        </li>
+        {% endif %}
+        <li class="breadcrumb-item active">删除文件夹</li>
+    </ol>
+</nav>
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card border-danger">
+            <div class="card-header bg-danger text-white">
+                <h4 class="mb-0"><i class="fas fa-trash-alt me-2"></i>确认删除文件夹</h4>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-danger">
+                    <h5 class="alert-heading">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        严重警告：此操作将永久删除文件夹及其所有内容！
+                    </h5>
+                    <p class="mb-0">删除文件夹将同时删除文件夹内的所有文件和子文件夹，此操作不可撤销！</p>
+                </div>
+                
+                <div class="card mb-4">
+                    <div class="card-body">
+                        <div class="d-flex align-items-center">
+                            <div class="folder-icon me-3">
+                                <i class="fas fa-folder fa-3x text-warning"></i>
+                            </div>
+                            <div>
+                                <h5 class="mb-1">{{ folder.name }}</h5>
+                                <p class="text-muted mb-1">路径: {{ folder.path }}</p>
+                                <p class="text-muted mb-1">创建时间: {{ folder.created_at|date:"Y-m-d H:i" }}</p>
+                                <p class="text-muted mb-1">最后修改: {{ folder.updated_at|date:"Y-m-d H:i" }}</p>
+                                
+                                {% with file_count=folder.files.count folder_count=folder.subfolders.count %}
+                                <div class="mt-3">
+                                    <div class="alert alert-warning">
+                                        <i class="fas fa-folder-open me-2"></i>
+                                        文件夹包含：
+                                        <ul class="mb-0 mt-2">
+                                            <li>{{ file_count }} 个文件</li>
+                                            <li>{{ folder_count }} 个子文件夹</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                                {% endwith %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="alert alert-info">
+                    <h6><i class="fas fa-lightbulb me-2"></i>删除前请确认：</h6>
+                    <ul class="mb-0">
+                        <li>是否已备份重要文件？</li>
+                        <li>是否确认不再需要此文件夹及其内容？</li>
+                        <li>是否已通知相关用户（如果有分享）？</li>
+                    </ul>
+                </div>
+                
+                <form method="post">
+                    {% csrf_token %}
+                    
+                    <div class="mb-4">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="confirmDelete" required>
+                            <label class="form-check-label text-danger fw-bold" for="confirmDelete">
+                                我理解此操作将永久删除文件夹及其所有内容，且不可撤销
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <a href="{% url 'storage:file_list' %}{% if folder.parent %}folder/{{ folder.parent.id }}/{% endif %}" 
+                           class="btn btn-secondary me-md-2">
+                            <i class="fas fa-times me-1"></i>取消
+                        </a>
+                        <button type="submit" class="btn btn-danger" id="deleteButton" disabled>
+                            <i class="fas fa-trash-alt me-1"></i>确认删除文件夹
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% block extra_js %}
+<script>
+    // 启用/禁用删除按钮
+    document.getElementById('confirmDelete').addEventListener('change', function() {
+        document.getElementById('deleteButton').disabled = !this.checked;
+    });
+    
+    // 表单提交确认
+    document.querySelector('form').addEventListener('submit', function(e) {
+        if (!document.getElementById('confirmDelete').checked) {
+            e.preventDefault();
+            alert('请先确认理解删除操作的后果');
+            return false;
+        }
+        
+        const confirmed = confirm('最后确认：您确定要永久删除文件夹 "{{ folder.name }}" 及其所有内容吗？\n\n此操作不可撤销！');
+        if (!confirmed) {
+            e.preventDefault();
+        }
+    });
+</script>
+{% endblock %}
+{% endblock %}

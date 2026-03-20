@@ -1,0 +1,74 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+
+{% block title %}注册 - 局域网网盘{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card shadow-sm">
+            <div class="card-header bg-success text-white">
+                <h4 class="mb-0"><i class="fas fa-user-plus me-2"></i>用户注册</h4>
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    
+                    <div class="mb-3">
+                        <label for="id_username" class="form-label">用户名</label>
+                        <input type="text" class="form-control" id="id_username" name="username" 
+                               required autofocus>
+                        <div class="form-text">150个字符以内，只能包含字母、数字和@/./+/-/_</div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="id_password1" class="form-label">密码</label>
+                        <input type="password" class="form-control" id="id_password1" name="password1" 
+                               required>
+                        <div class="form-text">
+                            <ul class="small mb-0">
+                                <li>不能与其他个人信息太相似</li>
+                                <li>至少包含8个字符</li>
+                                <li>不能是常见密码</li>
+                                <li>不能全是数字</li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label for="id_password2" class="form-label">确认密码</label>
+                        <input type="password" class="form-control" id="id_password2" name="password2" 
+                               required>
+                        <div class="form-text">再次输入密码以确认</div>
+                    </div>
+                    
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-success btn-lg">
+                            <i class="fas fa-user-plus me-2"></i>注册
+                        </button>
+                    </div>
+                </form>
+                
+                <div class="mt-4 text-center">
+                    <p class="mb-2">已有账号？</p>
+                    <a href="{% url 'accounts:login' %}" class="btn btn-outline-primary">
+                        <i class="fas fa-sign-in-alt me-2"></i>立即登录
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card mt-4">
+            <div class="card-body">
+                <h6><i class="fas fa-shield-alt text-success me-2"></i>隐私与安全</h6>
+                <ul class="mb-0">
+                    <li>您的文件仅您自己可见</li>
+                    <li>支持文件分享，分享链接可设置密码和有效期</li>
+                    <li>所有数据传输均在局域网内完成</li>
+                    <li>建议设置强密码保护您的账户</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

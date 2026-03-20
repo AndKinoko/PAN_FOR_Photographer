@@ -1,0 +1,103 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}分享详情 - 局域网网盘{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-8 offset-md-2">
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="mb-0">分享详情</h4>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-success">
+                        <i class="bi bi-check-circle"></i>
+                        分享链接创建成功！
+                    </div>
+                    
+                    <div class="mb-4">
+                        <h5>文件信息</h5>
+                        <ul class="list-group">
+                            <li class="list-group-item d-flex justify-content-between">
+                                <span>文件名:</span>
+                                <span><strong>{{ file.original_name }}</strong></span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between">
+                                <span>文件大小:</span>
+                                <span>{{ file.file.size|filesizeformat }}</span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between">
+                                <span>创建时间:</span>
+                                <span>{{ file.uploaded_at|date:"Y-m-d H:i" }}</span>
+                            </li>
+                        </ul>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <h5>分享信息</h5>
+                        <ul class="list-group">
+                            <li class="list-group-item d-flex justify-content-between">
+                                <span>分享链接:</span>
+                                <span>
+                                    <a href="{{ full_url }}" target="_blank" class="text-break">{{ full_url }}</a>
+                                </span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between">
+                                <span>分享ID:</span>
+                                <span><code>{{ share.share_id }}</code></span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between">
+                                <span>创建时间:</span>
+                                <span>{{ share.created_at|date:"Y-m-d H:i" }}</span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between">
+                                <span>过期时间:</span>
+                                <span>
+                                    {% if share.expires_at %}
+                                        {{ share.expires_at|date:"Y-m-d H:i" }}
+                                    {% else %}
+                                        <span class="text-success">永久有效</span>
+                                    {% endif %}
+                                </span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between">
+                                <span>访问密码:</span>
+                                <span>
+                                    {% if share.password %}
+                                        <span class="text-warning">已设置</span>
+                                    {% else %}
+                                        <span class="text-secondary">无</span>
+                                    {% endif %}
+                                </span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between">
+                                <span>下载次数:</span>
+                                <span>{{ share.download_count }}</span>
+                            </li>
+                        </ul>
+                    </div>
+                    
+                    <div class="alert alert-warning">
+                        <i class="bi bi-exclamation-triangle"></i>
+                        <strong>重要提示：</strong>请妥善保管此分享链接，任何拥有此链接的人都可以访问该文件。
+                    </div>
+                    
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <a href="{% url 'share:my_shares' %}" class="btn btn-secondary me-md-2">
+                            <i class="bi bi-list"></i> 返回我的分享
+                        </a>
+                        <a href="{% url 'storage:file_list' %}" class="btn btn-outline-primary me-md-2">
+                            <i class="bi bi-folder"></i> 返回文件列表
+                        </a>
+                        <a href="{% url 'share:delete_share' share.id %}" class="btn btn-danger">
+                            <i class="bi bi-trash"></i> 删除分享
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

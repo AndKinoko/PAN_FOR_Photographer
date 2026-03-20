@@ -1,0 +1,56 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}删除分享 - 局域网网盘{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-6 offset-md-3">
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="mb-0">删除分享链接</h4>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-warning">
+                        <i class="bi bi-exclamation-triangle"></i>
+                        <strong>警告：</strong>您确定要删除此分享链接吗？此操作不可撤销。
+                    </div>
+                    
+                    <div class="mb-4">
+                        <h5>分享信息</h5>
+                        <ul class="list-group">
+                            <li class="list-group-item d-flex justify-content-between">
+                                <span>文件名:</span>
+                                <span><strong>{{ share.file.original_name }}</strong></span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between">
+                                <span>分享ID:</span>
+                                <span><code>{{ share.share_id }}</code></span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between">
+                                <span>创建时间:</span>
+                                <span>{{ share.created_at|date:"Y-m-d H:i" }}</span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between">
+                                <span>下载次数:</span>
+                                <span>{{ share.download_count }}</span>
+                            </li>
+                        </ul>
+                    </div>
+                    
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                            <a href="{% url 'share:my_shares' %}" class="btn btn-secondary me-md-2">取消</a>
+                            <button type="submit" class="btn btn-danger">
+                                <i class="bi bi-trash"></i> 确认删除
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
