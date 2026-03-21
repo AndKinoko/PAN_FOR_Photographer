@@ -64,10 +64,10 @@ def file_upload(request, folder_id=None):
                 for uploaded_file in files:
                     logger.info(f"Processing file: {uploaded_file.name}, size: {uploaded_file.size}")
                     
-                    # Check file size (100MB limit from settings)
-                    MAX_FILE_SIZE = 104857600  # 100MB
+                    # Check file size (effectively unlimited - 10GB limit for safety)
+                    MAX_FILE_SIZE = 10737418240  # 10GB - effectively unlimited
                     if uploaded_file.size > MAX_FILE_SIZE:
-                        error_msg = f'文件 {uploaded_file.name} 大小超过限制 (最大 100MB)'
+                        error_msg = f'文件 {uploaded_file.name} 大小超过限制 (最大 10GB)'
                         logger.warning(error_msg)
                         messages.error(request, error_msg)
                         failed_uploads += 1
