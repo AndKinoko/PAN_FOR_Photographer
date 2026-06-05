@@ -57,6 +57,42 @@ def file_upload(request, folder_id=None):
         if form.is_valid():
             logger.info("Form validation passed")
             
+            if not files:
+                logger.warning("No files selected for upload")
+                messages.error(request, '请选择要上传的文件')
+                return redirect('storage:file_upload', folder_id=folder_id) if folder_id else redirect('storage:file_upload')
+            
+            # ─── 文件名重复检查 ────────────────────────────────────────────
+            uploaded_names = [f.name for f in files]
+            existing_files = File.objects.filter(owner=request.user, folder=folder)
+            existing_names = set(
+                existing_files.values_list('original_name', flat=True)
+            )
+            
+            # 不区分大小写比较
+            normalized_existing = {name.lower() for name in existing_names}
+            duplicates = [
+                name for name in uploaded_names
+                if name.lower() in normalized_existing
+            ]
+            
+            if duplicates:
+                duplicate_list = '\n'.join(f'  • {name}' for name in duplicates)
+                logger.warning(
+                    f"Duplicate filenames detected for user {request.user.id}: "
+                    f"{' ,'.join(duplicates)}"
+                )
+                msg = (
+                    f'以下 {len(duplicates)} 个文件与目标文件夹中的文件重名，上传已取消：\n'
+                    f'{duplicate_list}'
+                )
+                messages.error(request, msg)
+                if folder:
+                    return redirect('storage:file_list', folder_id=folder.id)
+                else:
+                    return redirect('storage:file_list')
+            # ─── 重复检查结束 ────────────────────────────────────────────────
+            
             if files:
                 successful_uploads = 0
                 failed_uploads = 0
