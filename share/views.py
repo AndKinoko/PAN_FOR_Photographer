@@ -85,7 +85,7 @@ def share_access(request, share_id):
     if share.password:
         if request.method == 'POST':
             entered_password = request.POST.get('password', '')
-            if entered_password == share.password:
+            if share.verify_password(entered_password):
                 request.session[f'share_access_{share_id}'] = True
                 return redirect('share:share_download', share_id=share.id)
             else:

@@ -227,12 +227,28 @@ class File(models.Model):
     @property
     def preview_url(self):
         """Return preview URL or original file URL if no preview available"""
+        raw_formats = ['nef', 'cr2', 'cr3', 'crw', 'arw', 'sr2', 'srf', 'dng', 'raf', 'orf', 'rw2', 'nrw']
+        image_formats = ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp', 'tiff', 'tif']
+        
+        from django.urls import reverse
+        
         if self.preview:
-            return self.preview.url
-        elif self.file_type.lower() in ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp', 'tiff', 'tif']:
-            return self.file.url
+            # 有生成预览图，使用预览
+            return f"{reverse('storage:serve_media', args=[self.id])}?preview=1"
+        elif self.file_type.lower() in image_formats:
+            # 常规图片无预览，可直接显示原图
+            return reverse('storage:serve_media', args=[self.id])
+        elif self.file_type.lower() in raw_formats:
+            # RAW 文件无预览，请求预览模式让后端返回 404
+            return f"{reverse('storage:serve_media', args=[self.id])}?preview=1"
         else:
             return None
+
+    @property
+    def protected_url(self):
+        """返回受保护的媒体文件访问 URL（需要登录）"""
+        from django.urls import reverse
+        return reverse('storage:serve_media', args=[self.id])
     
     @property
     def formatted_size(self):
@@ -250,24 +266,5 @@ class File(models.Model):
         return self.file.url
     
     def delete(self, *args, **kwargs):
-        """重写delete方法，确保删除文件时同时删除预览图"""
-        logger = logging.getLogger(__name__)
-        
-        # 删除预览文件（如果存在）
-        if self.preview:
-            try:
-                self.preview.delete(save=False)
-                logger.info(f"Deleted preview file for file {self.id}: {self.name}")
-            except Exception as e:
-                logger.warning(f"Could not delete preview file for file {self.id}: {str(e)}")
-        
-        # 删除原始文件（如果存在）
-        if self.file:
-            try:
-                self.file.delete(save=False)
-                logger.info(f"Deleted original file for file {self.id}: {self.name}")
-            except Exception as e:
-                logger.warning(f"Could not delete original file for file {self.id}: {str(e)}")
-        
-        # 调用父类的delete方法删除数据库记录
+        """重写delete方法，删除数据库记录（物理文件由 pre_delete 信号处理）"""
         super().delete(*args, **kwargs)

@@ -64,6 +64,16 @@ def file_upload(request, folder_id=None):
                 for uploaded_file in files:
                     logger.info(f"Processing file: {uploaded_file.name}, size: {uploaded_file.size}")
                     
+                    # 检查文件类型安全性
+                    ext = os.path.splitext(uploaded_file.name)[1].lower()
+                    blocked_exts = {'.html', '.htm', '.svg', '.js', '.mjs'}
+                    if ext in blocked_exts:
+                        error_msg = f'文件 {uploaded_file.name} 类型 "{ext}" 不允许上传（存在安全风险）'
+                        logger.warning(error_msg)
+                        messages.error(request, error_msg)
+                        failed_uploads += 1
+                        continue
+                    
                     # Check file size (effectively unlimited - 10GB limit for safety)
                     MAX_FILE_SIZE = 10737418240  # 10GB - effectively unlimited
                     if uploaded_file.size > MAX_FILE_SIZE:
@@ -126,13 +136,44 @@ def file_download(request, file_id):
         raise Http404("文件不存在")
 
 @login_required
+def serve_media(request, file_id):
+    """受保护的媒体文件访问 - 需要登录认证后才能预览文件"""
+    file = get_object_or_404(File, id=file_id, owner=request.user)
+    
+    if not os.path.exists(file.file.path):
+        raise Http404("文件不存在")
+    
+    # 判断是否为预览请求（带 preview 参数）
+    is_preview = request.GET.get('preview', '') == '1'
+    
+    if is_preview and file.preview and os.path.exists(file.preview.path):
+        # 返回预览图
+        response = FileResponse(file.preview.open('rb'))
+        content_type = 'image/jpeg'
+    elif is_preview:
+        # 请求预览但预览不存在（如 RAW 预览生成失败）
+        raise Http404("预览文件不存在")
+    else:
+        # 返回原始文件（内联展示）
+        response = FileResponse(file.file.open('rb'))
+        content_type = None  # 让 Django 自动检测
+    
+    if content_type:
+        response['Content-Type'] = content_type
+    
+    # 对内联内容不设置 Content-Disposition，允许浏览器直接展示
+    if not is_preview:
+        response['Content-Disposition'] = f'inline; filename="{file.original_name}"'
+    
+    return response
+
+@login_required
 def file_delete(request, file_id):
     """Delete a file"""
     file = get_object_or_404(File, id=file_id, owner=request.user)
     folder_id = file.folder.id if file.folder else None
     
     if request.method == 'POST':
-        file.file.delete()
         file.delete()
         messages.success(request, '文件已删除')
         if folder_id:

@@ -12,6 +12,7 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 
 from pathlib import Path
 import os
+from django.core.management.utils import get_random_secret_key
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -20,13 +21,22 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
 
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-your-secret-key-here-change-in-production'
+# Read SECRET_KEY from file or generate a persistent one
+SECRET_KEY_FILE = os.path.join(BASE_DIR, '.secret_key')
+if os.path.exists(SECRET_KEY_FILE):
+    with open(SECRET_KEY_FILE) as f:
+        SECRET_KEY = f.read().strip()
+else:
+    SECRET_KEY = get_random_secret_key()
+    with open(SECRET_KEY_FILE, 'w') as f:
+        f.write(SECRET_KEY)
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
-ALLOWED_HOSTS = ['*']  # Allow all hosts for LAN access
+# 内网穿透场景，动态允许所有 Host
+# 注意：如果暴露到公网，建议替换为具体的域名
+ALLOWED_HOSTS = ['*']
 
 
 # Application definition

@@ -4,51 +4,51 @@
 {% block title %}删除分享 - 局域网网盘{% endblock %}
 
 {% block content %}
-<div class="container mt-4">
-    <div class="row">
-        <div class="col-md-6 offset-md-3">
-            <div class="card">
-                <div class="card-header">
-                    <h4 class="mb-0">删除分享链接</h4>
+<div class="row justify-content-center animate-fade-in">
+    <div class="col-md-6 col-lg-5">
+        <div class="card-modern">
+            <div class="card-header">
+                <h4 class="mb-0"><i class="fas fa-trash-alt me-2" style="color: #ef4444;"></i>删除分享链接</h4>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-modern alert-warning">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    <strong>警告：</strong>您确定要删除此分享链接吗？此操作不可撤销。
                 </div>
-                <div class="card-body">
-                    <div class="alert alert-warning">
-                        <i class="bi bi-exclamation-triangle"></i>
-                        <strong>警告：</strong>您确定要删除此分享链接吗？此操作不可撤销。
-                    </div>
-                    
-                    <div class="mb-4">
-                        <h5>分享信息</h5>
-                        <ul class="list-group">
-                            <li class="list-group-item d-flex justify-content-between">
-                                <span>文件名:</span>
-                                <span><strong>{{ share.file.original_name }}</strong></span>
-                            </li>
-                            <li class="list-group-item d-flex justify-content-between">
-                                <span>分享ID:</span>
-                                <span><code>{{ share.share_id }}</code></span>
-                            </li>
-                            <li class="list-group-item d-flex justify-content-between">
-                                <span>创建时间:</span>
-                                <span>{{ share.created_at|date:"Y-m-d H:i" }}</span>
-                            </li>
-                            <li class="list-group-item d-flex justify-content-between">
-                                <span>下载次数:</span>
-                                <span>{{ share.download_count }}</span>
-                            </li>
-                        </ul>
-                    </div>
-                    
-                    <form method="post">
-                        {% csrf_token %}
-                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
-                            <a href="{% url 'share:my_shares' %}" class="btn btn-secondary me-md-2">取消</a>
-                            <button type="submit" class="btn btn-danger">
-                                <i class="bi bi-trash"></i> 确认删除
-                            </button>
+                
+                <div class="mb-4">
+                    <h5 class="mb-3"><i class="fas fa-info-circle me-2 text-secondary"></i>分享信息</h5>
+                    <div class="list-group" style="border-radius: var(--radius-md); overflow: hidden;">
+                        <div class="list-group-item d-flex justify-content-between align-items-center" style="background: rgba(99,102,241,0.02); border-color: rgba(99,102,241,0.06);">
+                            <span class="text-secondary">文件名</span>
+                            <span class="fw-semibold">{{ share.file.original_name }}</span>
                         </div>
-                    </form>
+                        <div class="list-group-item d-flex justify-content-between align-items-center" style="background: rgba(99,102,241,0.02); border-color: rgba(99,102,241,0.06);">
+                            <span class="text-secondary">分享ID</span>
+                            <span><code>{{ share.share_id }}</code></span>
+                        </div>
+                        <div class="list-group-item d-flex justify-content-between align-items-center" style="background: rgba(99,102,241,0.02); border-color: rgba(99,102,241,0.06);">
+                            <span class="text-secondary">创建时间</span>
+                            <span class="fw-semibold">{{ share.created_at|date:"Y-m-d H:i" }}</span>
+                        </div>
+                        <div class="list-group-item d-flex justify-content-between align-items-center" style="background: rgba(99,102,241,0.02); border-color: rgba(99,102,241,0.06);">
+                            <span class="text-secondary">下载次数</span>
+                            <span class="fw-semibold">{{ share.download_count }}</span>
+                        </div>
+                    </div>
                 </div>
+                
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <a href="{% url 'share:my_shares' %}" class="btn btn-outline-modern btn-modern me-md-2">
+                            <i class="fas fa-times me-1"></i>取消
+                        </a>
+                        <button type="submit" class="btn btn-danger-modern btn-modern">
+                            <i class="fas fa-trash-alt me-1"></i> 确认删除
+                        </button>
+                    </div>
+                </form>
             </div>
         </div>
     </div>

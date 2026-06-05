@@ -31,6 +31,6 @@ def search_files(request):
         'file_types': File.objects.filter(owner=request.user)
                                   .values_list('file_type', flat=True)
                                   .distinct()
-                                  .order_by('file_type'),
+                                  .order_by('file_type') if query else [],
     }
     return render(request, 'search/search.html', context)

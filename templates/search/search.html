@@ -3,7 +3,7 @@
 {% block title %}文件搜索 - 局域网网盘{% endblock %}
 
 {% block breadcrumb %}
-<nav aria-label="breadcrumb" class="mb-3">
+<nav aria-label="breadcrumb" class="breadcrumb-modern">
     <ol class="breadcrumb">
         <li class="breadcrumb-item">
             <a href="{% url 'storage:file_list' %}">
@@ -16,23 +16,23 @@
 {% endblock %}
 
 {% block content %}
-<div class="row">
+<div class="row animate-fade-in">
     <div class="col-md-4">
-        <div class="card mb-4">
-            <div class="card-header bg-primary text-white">
+        <div class="card-modern mb-4">
+            <div class="card-header">
                 <h5 class="mb-0"><i class="fas fa-search me-2"></i>搜索条件</h5>
             </div>
             <div class="card-body">
                 <form method="get" action="{% url 'search:search_files' %}">
                     <div class="mb-3">
-                        <label for="q" class="form-label">搜索关键词</label>
-                        <input type="text" class="form-control" id="q" name="q" 
+                        <label for="q" class="form-label-modern">搜索关键词</label>
+                        <input type="text" class="form-control-modern w-100" id="q" name="q" 
                                value="{{ query }}" placeholder="输入文件名或文件夹名">
                     </div>
                     
                     <div class="mb-3">
-                        <label for="type" class="form-label">文件类型</label>
-                        <select class="form-select" id="type" name="type">
+                        <label for="type" class="form-label-modern">文件类型</label>
+                        <select class="form-control-modern w-100" id="type" name="type">
                             <option value="">所有类型</option>
                             {% for type in file_types %}
                             <option value="{{ type }}" {% if file_type == type %}selected{% endif %}>
@@ -43,7 +43,7 @@
                     </div>
                     
                     <div class="d-grid">
-                        <button type="submit" class="btn btn-primary">
+                        <button type="submit" class="btn btn-primary-modern btn-modern">
                             <i class="fas fa-search me-2"></i>开始搜索
                         </button>
                     </div>
@@ -51,7 +51,7 @@
             </div>
         </div>
         
-        <div class="card">
+        <div class="card-modern">
             <div class="card-body">
                 <h6><i class="fas fa-lightbulb text-warning me-2"></i>搜索提示</h6>
                 <ul class="small mb-0">
@@ -65,8 +65,8 @@
     </div>
     
     <div class="col-md-8">
-        <div class="card">
-            <div class="card-header bg-light">
+        <div class="card-modern">
+            <div class="card-header">
                 <h5 class="mb-0">
                     <i class="fas fa-search-result me-2"></i>
                     搜索结果
@@ -80,18 +80,18 @@
                     <!-- Folders results -->
                     {% if results.folders %}
                     <div class="mb-4">
-                        <h6 class="border-bottom pb-2">
+                        <h6 class="border-bottom pb-2" style="border-color: rgba(99,102,241,0.08) !important;">
                             <i class="fas fa-folder text-warning me-2"></i>
                             文件夹 ({{ results.folders|length }})
                         </h6>
                         <div class="row">
                             {% for folder in results.folders %}
                             <div class="col-md-6 mb-3">
-                                <div class="card folder-item">
+                                <div class="card-modern h-100">
                                     <div class="card-body">
                                         <div class="d-flex align-items-center">
-                                            <div class="folder-icon me-3">
-                                                <i class="fas fa-folder fa-2x text-warning"></i>
+                                            <div class="file-icon-wrapper default me-3">
+                                                <i class="fas fa-folder text-warning"></i>
                                             </div>
                                             <div>
                                                 <h6 class="mb-1">{{ folder.name }}</h6>
@@ -102,8 +102,8 @@
                                         </div>
                                         <div class="mt-3">
                                             <a href="{% url 'storage:file_list' folder_id=folder.id %}" 
-                                               class="btn btn-sm btn-outline-primary">
-                                                打开文件夹
+                                               class="btn btn-outline-modern btn-modern btn-sm">
+                                                <i class="fas fa-folder-open me-1"></i>打开文件夹
                                             </a>
                                         </div>
                                     </div>
@@ -117,12 +117,12 @@
                     <!-- Files results -->
                     {% if results.files %}
                     <div>
-                        <h6 class="border-bottom pb-2">
+                        <h6 class="border-bottom pb-2" style="border-color: rgba(99,102,241,0.08) !important;">
                             <i class="fas fa-file text-primary me-2"></i>
                             文件 ({{ results.files|length }})
                         </h6>
                         <div class="table-responsive">
-                            <table class="table table-hover">
+                            <table class="table table-modern">
                                 <thead>
                                     <tr>
                                         <th>文件名</th>
@@ -137,19 +137,25 @@
                                     <tr>
                                         <td>
                                             <div class="d-flex align-items-center">
-                                                <div class="file-icon me-3">
+                                                <div class="file-icon-wrapper 
+                                                    {% if file.file_type == 'pdf' %}pdf
+                                                    {% elif file.file_type in 'jpg,jpeg,png,gif,bmp' %}image
+                                                    {% elif file.file_type in 'doc,docx' %}document
+                                                    {% elif file.file_type in 'xls,xlsx' %}spreadsheet
+                                                    {% elif file.file_type in 'zip,rar,7z' %}archive
+                                                    {% else %}default{% endif %} me-3">
                                                     {% if file.file_type == 'pdf' %}
-                                                    <i class="fas fa-file-pdf text-danger"></i>
+                                                    <i class="fas fa-file-pdf"></i>
                                                     {% elif file.file_type in 'jpg,jpeg,png,gif,bmp' %}
-                                                    <i class="fas fa-file-image text-success"></i>
+                                                    <i class="fas fa-file-image"></i>
                                                     {% elif file.file_type in 'doc,docx' %}
-                                                    <i class="fas fa-file-word text-primary"></i>
+                                                    <i class="fas fa-file-word"></i>
                                                     {% elif file.file_type in 'xls,xlsx' %}
-                                                    <i class="fas fa-file-excel text-success"></i>
+                                                    <i class="fas fa-file-excel"></i>
                                                     {% elif file.file_type in 'zip,rar,7z' %}
-                                                    <i class="fas fa-file-archive text-warning"></i>
+                                                    <i class="fas fa-file-archive"></i>
                                                     {% else %}
-                                                    <i class="fas fa-file text-secondary"></i>
+                                                    <i class="fas fa-file"></i>
                                                     {% endif %}
                                                 </div>
                                                 <div>
@@ -159,17 +165,15 @@
                                             </div>
                                         </td>
                                         <td>
-                                            <span class="badge bg-secondary">{{ file.file_type|upper }}</span>
+                                            <span class="badge badge-modern" style="background: rgba(99,102,241,0.1); color: #6366f1;">{{ file.file_type|upper }}</span>
                                         </td>
                                         <td>{{ file.formatted_size }}</td>
                                         <td>{{ file.uploaded_at|date:"Y-m-d H:i" }}</td>
                                         <td>
-                                            <div class="btn-group btn-group-sm">
-                                                <a href="{% url 'storage:file_download' file_id=file.id %}" 
-                                                   class="btn btn-outline-primary" title="下载">
-                                                    <i class="fas fa-download"></i>
-                                                </a>
-                                            </div>
+                                            <a href="{% url 'storage:file_download' file_id=file.id %}" 
+                                               class="btn btn-outline-modern btn-modern btn-sm" title="下载">
+                                                <i class="fas fa-download"></i>
+                                            </a>
                                         </td>
                                     </tr>
                                     {% endfor %}
@@ -181,22 +185,22 @@
                     
                     <!-- No results -->
                     {% if not results.folders and not results.files %}
-                    <div class="text-center py-5">
-                        <div class="mb-4">
-                            <i class="fas fa-search fa-5x text-muted"></i>
+                    <div class="empty-state">
+                        <div class="empty-state-icon">
+                            <i class="fas fa-search"></i>
                         </div>
-                        <h4 class="text-muted mb-3">未找到匹配的结果</h4>
-                        <p class="text-muted">请尝试其他关键词或文件类型</p>
+                        <h4>未找到匹配的结果</h4>
+                        <p>请尝试其他关键词或文件类型</p>
                     </div>
                     {% endif %}
                 {% else %}
                 <!-- Initial state -->
-                <div class="text-center py-5">
-                    <div class="mb-4">
-                        <i class="fas fa-search fa-5x text-muted"></i>
+                <div class="empty-state">
+                    <div class="empty-state-icon">
+                        <i class="fas fa-search"></i>
                     </div>
-                    <h4 class="text-muted mb-3">输入关键词开始搜索</h4>
-                    <p class="text-muted">搜索您的文件和文件夹</p>
+                    <h4>输入关键词开始搜索</h4>
+                    <p>搜索您的文件和文件夹</p>
                 </div>
                 {% endif %}
             </div>

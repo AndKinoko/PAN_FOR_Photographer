@@ -7,7 +7,7 @@ class FileShareForm(forms.Form):
         (24, '24小时'),
         (168, '7天'),
         (720, '30天'),
-        (None, '永久有效'),
+        (0, '永久有效'),  # 0 表示无过期时间
     ]
     
     expires_hours = forms.ChoiceField(
@@ -29,6 +29,6 @@ class FileShareForm(forms.Form):
     
     def clean_expires_hours(self):
         expires_hours = self.cleaned_data.get('expires_hours')
-        if expires_hours == '' or expires_hours is None:
+        if expires_hours == '' or expires_hours == '0' or expires_hours is None:
             return None
         return int(expires_hours)

@@ -11,6 +11,7 @@ urlpatterns = [
     path('upload/folder/<int:folder_id>/', views.file_upload, name='file_upload'),
     path('download/<int:file_id>/', views.file_download, name='file_download'),
     path('delete/<int:file_id>/', views.file_delete, name='file_delete'),
+    path('media/<int:file_id>/', views.serve_media, name='serve_media'),
     
     # Folder operations
     path('folder/create/', views.folder_create, name='folder_create'),

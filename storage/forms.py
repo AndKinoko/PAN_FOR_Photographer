@@ -1,5 +1,7 @@
 from django import forms
+from django.core.exceptions import ValidationError
 from .models import File, Folder
+import os
 
 class FileUploadForm(forms.Form):
     """Form for uploading multiple files"""
@@ -9,6 +11,26 @@ class FileUploadForm(forms.Form):
         }),
         label='选择文件'
     )
+    
+    # 禁止上传的可执行/脚本文件类型（防止 XSS 和恶意内容分发）
+    BLOCKED_EXTENSIONS = {
+        '.html', '.htm', '.svg', '.js', '.mjs',  # XSS 向量
+    }
+
+    def clean_file(self):
+        uploaded_file = self.cleaned_data.get('file')
+        if not uploaded_file:
+            return uploaded_file
+        
+        ext = os.path.splitext(uploaded_file.name)[1].lower()
+        
+        # 拦截危险文件类型
+        if ext in self.BLOCKED_EXTENSIONS:
+            raise ValidationError(
+                f'文件类型 "{ext}" 不允许上传（存在安全风险）'
+            )
+        
+        return uploaded_file
     
     def __init__(self, *args, **kwargs):
         self.user = kwargs.pop('user', None)
