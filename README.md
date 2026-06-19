@@ -2,9 +2,8 @@
 
 一个基于 Django 的私有云存储解决方案，支持局域网内设备访问，具备完整的文件管理、分享、搜索功能，并针对手机端进行了响应式设计优化。
 
-> **当前版本**: V1.5_26/03/20 (RAW Preview Edition)  
-> **发布日期**: 2026年3月20日  
-> **版本代号**: RAW Preview Edition
+> **当前版本**: V1.5_26/03/20  
+> **发布日期**: 2026年3月20日
 
 ---
 
@@ -47,8 +46,8 @@
 ### 后端
 | 技术 | 说明 |
 |------|------|
-| Django 4.2+ | Web 框架 |
-| SQLite (开发) / PostgreSQL (生产) | 数据库 |
+| Django 4.x | Web 框架 |
+| SQLite | 数据库 |
 | Pillow, rawpy, imageio, numpy | 图像处理（RAW 解码） |
 | Django 内置认证系统 | 用户认证 |
 
@@ -108,7 +107,7 @@ lan_drive/
 
 ### 环境要求
 - Python 3.8+
-- Django 4.0+
+- Django 4.x（详见 requirements.txt）
 - 内存: 至少 2GB（用于 RAW 文件处理）
 - 操作系统: Windows / Linux / macOS
 
@@ -133,114 +132,38 @@ pip install -r requirements.txt
 # 4. 数据库迁移
 python manage.py migrate
 
-# 5. 创建超级用户
+# 5. 创建超级用户（管理员）
 python manage.py createsuperuser
 
-# 6. 收集静态文件
-python manage.py collectstatic
-
-# 7. 运行开发服务器（局域网访问）
+# 6. 运行开发服务器（局域网访问）
 python manage.py runserver 0.0.0.0:8000
 ```
 
 ### 访问方式
 - 本机访问: `http://localhost:8000`
 - 局域网访问: `http://[你的IP地址]:8000`
+- 管理后台: `http://localhost:8000/admin/`（需超级用户登录）
+
+### 一键启动（Windows）
+双击项目根目录下的 `start_server.bat` 即可自动完成创建虚拟环境、安装依赖、数据库迁移并启动服务器。
 
 ---
 
 ## 部署指南
 
-### 开发环境（局域网）
+### 局域网部署
 
-```bash
+```powershell
 # 获取本机 IP
-# Windows: ipconfig
-# Linux/Mac: ifconfig
+ipconfig
 
 # 确保防火墙允许 8000 端口
 # Windows: 防火墙 → 入站规则 → 新建 8000/TCP
-# Linux: sudo ufw allow 8000/tcp
 
 # 启动
 python manage.py runserver 0.0.0.0:8000
-```
 
-### 生产环境（Linux + Gunicorn + Nginx）
-
-1. **安装 Gunicorn**:
-```bash
-pip install gunicorn
-```
-
-2. **创建 systemd 服务** `/etc/systemd/system/gunicorn.service`:
-```ini
-[Unit]
-Description=gunicorn daemon for lan_drive
-After=network.target
-
-[Service]
-User=www-data
-Group=www-data
-WorkingDirectory=/path/to/lan_drive
-ExecStart=/path/to/lan_drive/venv/bin/gunicorn --workers 3 --bind unix:/path/to/lan_drive/lan_drive.sock drive.wsgi:application
-```
-
-3. **配置 Nginx**:
-```nginx
-server {
-    listen 80;
-    server_name your-server-ip;
-
-    location /static/ { root /path/to/lan_drive; }
-    location /media/  { root /path/to/lan_drive; }
-
-    location / {
-        include proxy_params;
-        proxy_pass http://unix:/path/to/lan_drive/lan_drive.sock;
-    }
-}
-```
-
-### 建议的生产环境配置
-
-```python
-# settings.py
-DEBUG = False
-ALLOWED_HOSTS = ['your-domain.com', 'your-ip-address']
-SECURE_SSL_REDIRECT = True  # 使用 HTTPS
-SESSION_COOKIE_SECURE = True
-CSRF_COOKIE_SECURE = True
-
-# 数据库（PostgreSQL）
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'lan_drive',
-        'USER': 'your_user',
-        'PASSWORD': 'your_password',
-        'HOST': 'localhost',
-        'PORT': '5432',
-    }
-}
-
-# 缓存（Redis）
-CACHES = {
-    'default': {
-        'BACKEND': 'django.core.cache.backends.redis.RedisCache',
-        'LOCATION': 'redis://127.0.0.1:6379/1',
-    }
-}
-```
-
-### 更新项目
-
-```bash
-git pull origin main
-pip install -r requirements.txt --upgrade
-python manage.py migrate
-python manage.py collectstatic
-sudo systemctl restart gunicorn
+# 或直接双击 start_server.bat（自动完成全部步骤）
 ```
 
 ### 常见问题
@@ -249,7 +172,6 @@ sudo systemctl restart gunicorn
 |------|------|
 | 无法从其他设备访问 | 检查防火墙，确保使用 `0.0.0.0:8000` 而非 `127.0.0.1` |
 | 文件上传失败 | 检查 `media/` 目录权限和磁盘空间 |
-| 静态文件无法加载 | 运行 `python manage.py collectstatic` |
 | RAW 文件解码失败 | 确保安装了 rawpy 和依赖的 C++ 运行时库 |
 
 ---
@@ -277,17 +199,20 @@ sudo systemctl restart gunicorn
 
 ### 备份策略
 
-```bash
-#!/bin/bash
-# backup.sh
-DATE=$(date +%Y%m%d)
-BACKUP_DIR="/backups/lan_drive"
-mkdir -p $BACKUP_DIR/$DATE
+```powershell
+# backup.ps1 (Windows PowerShell)
+$date = Get-Date -Format "yyyyMMdd"
+$backupDir = "D:\backups\lan_drive\$date"
+New-Item -ItemType Directory -Path $backupDir -Force
 
-python manage.py dumpdata > $BACKUP_DIR/$DATE/db_backup.json
-rsync -av /path/to/lan_drive/media/ $BACKUP_DIR/$DATE/media/
-tar -czf $BACKUP_DIR/$DATE/code.tar.gz /path/to/lan_drive/
-find $BACKUP_DIR -type d -mtime +7 -exec rm -rf {} \;
+python manage.py dumpdata > "$backupDir\db_backup.json"
+Copy-Item -Path "media" -Destination "$backupDir\media\" -Recurse
+Write-Host "备份完成: $backupDir"
+
+# 删除 7 天前的备份
+Get-ChildItem "D:\backups\lan_drive" -Directory | Where-Object {
+    $_.CreationTime -lt (Get-Date).AddDays(-7)
+} | Remove-Item -Recurse -Force
 ```
 
 ---
@@ -301,26 +226,7 @@ find $BACKUP_DIR -type d -mtime +7 -exec rm -rf {} \;
 - **响应式布局**: Bootstrap 5 网格系统，适配 xs 到 xl 所有断点
 - **触摸优化**: 按钮尺寸 ≥44×44 px，足够的触摸目标间距
 - **性能优化**: 懒加载图片、压缩静态资源
-- **移动端导航**: 汉堡菜单、适合手指操作的界面元素
 - **表单优化**: 防止 iOS 自动缩放（`font-size: 16px`）
-
-### 测试建议
-
-| 测试类型 | 内容 |
-|----------|------|
-| 布局测试 | iPhone SE/12/14、iPad、横屏/竖屏模式 |
-| 功能测试 | 文件上传/下载/分享在移动端正常工作 |
-| 性能测试 | 3G 网络下页面加载 ≤3 秒 |
-| 浏览器兼容 | iOS Safari、Android Chrome、微信内置浏览器 |
-
-### 常见移动端问题
-
-| 问题 | 解决方案 |
-|------|----------|
-| 上传按钮太小 | 加大触摸目标，添加视觉反馈 |
-| 表格显示不全 | 移动端使用水平滚动或卡片布局 |
-| 键盘遮挡表单 | 自动聚焦滚动，虚拟键盘友好布局 |
-| 网络不稳定 | 上传进度显示，离线提示 |
 
 ---
 
@@ -390,24 +296,4 @@ python manage.py shell
 
 ## 许可证
 
-MIT License
-
-Copyright (c) 2026
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
+[MIT License](https://opensource.org/licenses/MIT) © 2026
