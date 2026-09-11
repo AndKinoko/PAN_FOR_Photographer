@@ -1,15 +1,30 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
-from django.http import FileResponse, Http404
+from django.http import FileResponse, Http404, HttpResponseForbidden
 from django.db.models import Q
 import os
 import logging
 
+from accounts.models import UserProfile, format_bytes
 from .models import File, Folder
 from .forms import FileUploadForm, FolderCreateForm
 
 logger = logging.getLogger(__name__)
+
+
+def get_profile(user):
+    profile, _ = UserProfile.objects.get_or_create(user=user)
+    return profile
+
+
+def is_frozen(user):
+    return get_profile(user).is_frozen
+
+
+def frozen_response(request):
+    messages.error(request, '账号已冻结，仅可登录预览，请联系管理员')
+    return redirect('storage:file_list')
 
 @login_required
 def file_list(request, folder_id=None):
@@ -42,6 +57,9 @@ def file_list(request, folder_id=None):
 @login_required
 def file_upload(request, folder_id=None):
     """Handle file upload"""
+    if is_frozen(request.user):
+        return frozen_response(request)
+
     folder = None
     if folder_id:
         folder = get_object_or_404(Folder, id=folder_id, owner=request.user)
@@ -92,7 +110,23 @@ def file_upload(request, folder_id=None):
                 else:
                     return redirect('storage:file_list')
             # ─── 重复检查结束 ────────────────────────────────────────────────
-            
+
+            # ─── 配额检查 ────────────────────────────────────────────────────
+            profile = get_profile(request.user)
+            if profile.quota_bytes:
+                incoming = sum(f.size for f in files)
+                usage = profile.usage_bytes()
+                if usage + incoming > profile.quota_bytes:
+                    messages.error(
+                        request,
+                        f'容量不足：已用 {format_bytes(usage)} / 配额 {format_bytes(profile.quota_bytes)}，'
+                        f'本次需 {format_bytes(incoming)}，请联系管理员扩容'
+                    )
+                    if folder:
+                        return redirect('storage:file_list', folder_id=folder.id)
+                    return redirect('storage:file_list')
+            # ─── 配额检查结束 ────────────────────────────────────────────────
+
             if files:
                 successful_uploads = 0
                 failed_uploads = 0
@@ -162,6 +196,8 @@ def file_upload(request, folder_id=None):
 @login_required
 def file_download(request, file_id):
     """Download a file"""
+    if is_frozen(request.user):
+        return HttpResponseForbidden('账号已冻结，无法下载（仍可登录预览），请联系管理员')
     file = get_object_or_404(File, id=file_id, owner=request.user)
     
     if os.path.exists(file.file.path):
@@ -175,12 +211,16 @@ def file_download(request, file_id):
 def serve_media(request, file_id):
     """受保护的媒体文件访问 - 需要登录认证后才能预览文件"""
     file = get_object_or_404(File, id=file_id, owner=request.user)
-    
+
     if not os.path.exists(file.file.path):
         raise Http404("文件不存在")
-    
+
     # 判断是否为预览请求（带 preview 参数）
     is_preview = request.GET.get('preview', '') == '1'
+
+    # 冻结账号：允许预览图/图片类预览，禁止原文件直链（等同下载）
+    if is_frozen(request.user) and not is_preview:
+        return HttpResponseForbidden('账号已冻结，无法下载（仍可登录预览），请联系管理员')
     
     if is_preview and file.preview and os.path.exists(file.preview.path):
         # 返回预览图
@@ -206,6 +246,8 @@ def serve_media(request, file_id):
 @login_required
 def file_delete(request, file_id):
     """Delete a file"""
+    if is_frozen(request.user):
+        return frozen_response(request)
     file = get_object_or_404(File, id=file_id, owner=request.user)
     folder_id = file.folder.id if file.folder else None
     
@@ -223,6 +265,8 @@ def file_delete(request, file_id):
 @login_required
 def folder_create(request, parent_id=None):
     """Create a new folder"""
+    if is_frozen(request.user):
+        return frozen_response(request)
     parent = None
     if parent_id:
         parent = get_object_or_404(Folder, id=parent_id, owner=request.user)
@@ -250,6 +294,8 @@ def folder_create(request, parent_id=None):
 @login_required
 def folder_delete(request, folder_id):
     """Delete a folder"""
+    if is_frozen(request.user):
+        return frozen_response(request)
     folder = get_object_or_404(Folder, id=folder_id, owner=request.user)
     parent_id = folder.parent.id if folder.parent else None
     

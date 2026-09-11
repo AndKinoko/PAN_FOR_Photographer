@@ -12,6 +12,11 @@ from .forms import FileShareForm
 @login_required
 def create_share(request, file_id):
     """Create a file share link"""
+    from accounts.models import UserProfile
+    profile, _ = UserProfile.objects.get_or_create(user=request.user)
+    if profile.is_frozen:
+        messages.error(request, '账号已冻结，仅可登录预览，请联系管理员')
+        return redirect('storage:file_list')
     file = get_object_or_404(File, id=file_id, owner=request.user)
     
     if request.method == 'POST':

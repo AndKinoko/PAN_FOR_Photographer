@@ -4,130 +4,101 @@
 {% block title %}上传文件 - 局域网网盘{% endblock %}
 
 {% block breadcrumb %}
-<nav aria-label="breadcrumb">
-    <ol class="breadcrumb breadcrumb-modern">
-        <li class="breadcrumb-item">
-            <a href="{% url 'storage:file_list' %}">
-                <i class="fas fa-home"></i> 根目录
-            </a>
-        </li>
-        {% if current_folder %}
-        <li class="breadcrumb-item">
-            <a href="{% url 'storage:file_list' folder_id=current_folder.id %}">
-                {{ current_folder.name }}
-            </a>
-        </li>
-        {% endif %}
-        <li class="breadcrumb-item active">上传文件</li>
-    </ol>
-</nav>
+<div class="breadcrumb-modern">
+    <a href="{% url 'storage:file_list' %}">
+        <i class="fas fa-home"></i> 首页
+    </a>
+    <span class="separator">/</span>
+    {% if current_folder %}
+    <a href="{% url 'storage:file_list' folder_id=current_folder.id %}">{{ current_folder.name }}</a>
+    <span class="separator">/</span>
+    {% endif %}
+    <span class="current">上传文件</span>
+</div>
 {% endblock %}
 
 {% block content %}
-<div class="row justify-content-center animate-fade-in">
-    <div class="col-md-8">
-        <div class="card-modern mb-4">
-            <div class="card-header header-gradient">
-                <h4 class="mb-0">
-                    <i class="fas fa-upload me-2"></i>上传文件
-                    {% if current_folder %}
-                    <small class="fs-6 opacity-75 ms-2">到 {{ current_folder.name }}</small>
-                    {% endif %}
-                </h4>
-            </div>
-            <div class="card-body">
-                <form method="post" enctype="multipart/form-data" id="uploadForm">
-                    {% csrf_token %}
-                    
-                    <!-- Drag & Drop Zone -->
-                    <div class="mb-4">
-                        <label for="file" class="form-label-modern">选择文件</label>
-                        <div id="dropZone" class="drop-zone">
-                            <div class="drop-zone-content">
-                                <i class="fas fa-cloud-upload-alt drop-zone-icon"></i>
-                                <p class="drop-zone-text">拖拽文件到此处或点击选择</p>
-                                <span class="drop-zone-hint">支持多文件上传，无文件类型和大小限制</span>
-                            </div>
-                            <input type="file" class="form-control-modern file-input" id="file" name="file" multiple required>
+<div style="max-width: 700px; margin: 0 auto;">
+    <div class="page-header">
+        <h1 class="page-title">
+            <i class="fas fa-upload" style="color: var(--accent); margin-right: 12px;"></i>上传文件
+            {% if current_folder %}
+            <span style="font-size: 0.9rem; font-weight: 400; color: var(--text-muted); margin-left: 8px;">到 {{ current_folder.name }}</span>
+            {% endif %}
+        </h1>
+    </div>
+
+    <div class="card-modern">
+        <div class="card-body">
+            <form method="post" enctype="multipart/form-data" id="uploadForm">
+                {% csrf_token %}
+                
+                <div style="margin-bottom: 20px;">
+                    <label style="display: block; font-weight: 500; color: var(--text-primary); margin-bottom: 8px;">选择文件</label>
+                    <div id="dropZone" class="drop-zone">
+                        <div class="drop-zone-content">
+                            <i class="fas fa-cloud-upload-alt drop-zone-icon"></i>
+                            <p class="drop-zone-text">拖拽文件到此处或点击选择</p>
+                            <span class="drop-zone-hint">支持多文件上传，无文件类型和大小限制</span>
                         </div>
-                        <div id="file-list" class="mt-3"></div>
-                        <div class="form-text-modern">支持多文件上传，无文件类型和大小限制</div>
+                        <input type="file" class="file-input" id="file" name="file" multiple required>
                     </div>
-                    
-                    <div class="alert-modern alert-info mb-4">
-                        <i class="fas fa-info-circle me-2"></i>
-                        文件将上传到：
-                        <strong>
-                            {% if current_folder %}
-                            {{ current_folder.path }}/
-                            {% else %}
-                            根目录
-                            {% endif %}
-                        </strong>
-                    </div>
-                    
-                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
-                        <a href="{% url 'storage:file_list' %}{% if current_folder %}folder/{{ current_folder.id }}/{% endif %}" 
-                           class="btn btn-modern btn-outline-modern me-md-2">
-                            <i class="fas fa-times me-1"></i>取消
-                        </a>
-                        <button type="submit" class="btn btn-modern btn-primary-modern">
-                            <i class="fas fa-upload me-1"></i>开始上传
-                        </button>
-                    </div>
-                </form>
-            </div>
-        </div>
-        
-        <div class="card-modern">
-            <div class="card-body">
-                <h5 class="mb-3"><i class="fas fa-lightbulb text-warning me-2"></i>上传提示</h5>
-                <ul class="mb-0 list-unstyled">
-                    <li class="mb-2"><i class="fas fa-check-circle text-success me-2" style="font-size:0.8rem;"></i>支持同时上传多个文件</li>
-                    <li class="mb-2"><i class="fas fa-check-circle text-success me-2" style="font-size:0.8rem;"></i>无文件类型限制，可以上传任何类型的文件</li>
-                    <li class="mb-2"><i class="fas fa-check-circle text-success me-2" style="font-size:0.8rem;"></i>无文件大小限制，但请注意网络传输时间</li>
-                    <li class="mb-2"><i class="fas fa-info-circle text-primary me-2" style="font-size:0.8rem;"></i>上传过程中请勿关闭页面</li>
-                    <li><i class="fas fa-info-circle text-primary me-2" style="font-size:0.8rem;"></i>大文件上传可能需要较长时间，请耐心等待</li>
-                </ul>
-            </div>
+                    <div id="file-list"></div>
+                </div>
+                
+                <div style="padding: 12px 16px; background: var(--bg-secondary); border-radius: var(--radius-sm); margin-bottom: 20px; font-size: 0.85rem; color: var(--text-muted);">
+                    <i class="fas fa-info-circle" style="margin-right: 8px;"></i>
+                    文件将上传到：<strong style="color: var(--text-primary);">{% if current_folder %}{{ current_folder.path }}/{% else %}根目录{% endif %}</strong>
+                </div>
+                
+                <div style="display: flex; gap: 12px; justify-content: flex-end;">
+                    <a href="{% url 'storage:file_list' %}{% if current_folder %}folder/{{ current_folder.id }}/{% endif %}" 
+                       class="btn btn-outline">
+                        <i class="fas fa-times"></i> 取消
+                    </a>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-upload"></i> 开始上传
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
 </div>
 
 <style>
     .drop-zone {
-        border: 2px dashed rgba(99, 102, 241, 0.25);
-        border-radius: var(--radius-md, 12px);
-        padding: 2.5rem 1.5rem;
+        border: 2px dashed var(--border);
+        border-radius: var(--radius-sm);
+        padding: 48px 24px;
         text-align: center;
         cursor: pointer;
-        transition: var(--transition-normal, 0.3s cubic-bezier(0.4, 0, 0.2, 1));
-        background: rgba(99, 102, 241, 0.02);
+        transition: all 0.2s;
+        background: var(--bg-secondary);
         position: relative;
     }
     .drop-zone:hover,
     .drop-zone.drag-over {
-        border-color: var(--primary-dark, #4f46e5);
-        background: rgba(99, 102, 241, 0.05);
-        box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.08);
+        border-color: var(--accent);
+        background: rgba(201, 169, 98, 0.05);
     }
     .drop-zone.drag-over .drop-zone-icon {
         transform: translateY(-4px);
     }
     .drop-zone-icon {
         font-size: 3rem;
-        color: var(--primary-light, #a78bfa);
-        margin-bottom: 1rem;
-        transition: var(--transition-normal, 0.3s cubic-bezier(0.4, 0, 0.2, 1));
+        color: var(--accent);
+        margin-bottom: 12px;
+        opacity: 0.6;
+        transition: all 0.2s;
     }
     .drop-zone-text {
-        font-weight: 600;
-        color: var(--text-primary, #1e293b);
-        margin-bottom: 0.5rem;
-        font-size: 1.05rem;
+        font-weight: 500;
+        color: var(--text-primary);
+        margin-bottom: 8px;
+        font-size: 1rem;
     }
     .drop-zone-hint {
-        color: var(--text-muted, #94a3b8);
+        color: var(--text-muted);
         font-size: 0.85rem;
     }
     .file-input {
@@ -139,36 +110,35 @@
     .selected-file-item {
         display: flex;
         align-items: center;
-        padding: 0.6rem 0.75rem;
-        background: rgba(99, 102, 241, 0.04);
-        border-radius: var(--radius-sm, 8px);
-        margin-bottom: 0.4rem;
-        transition: var(--transition-fast, 0.2s cubic-bezier(0.4, 0, 0.2, 1));
+        padding: 10px 12px;
+        background: var(--bg-primary);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-sm);
+        margin-bottom: 8px;
+        transition: all 0.2s;
     }
     .selected-file-item:hover {
-        background: rgba(99, 102, 241, 0.08);
+        border-color: var(--accent);
     }
     .selected-file-item i {
-        font-size: 1.1rem;
-        margin-right: 0.75rem;
-        color: var(--primary-light, #a78bfa);
+        margin-right: 12px;
+        color: var(--accent);
     }
     .selected-file-item .file-name {
         flex: 1;
         font-weight: 500;
         font-size: 0.9rem;
+        color: var(--text-primary);
     }
     .selected-file-item .file-size {
-        color: var(--text-muted, #94a3b8);
+        color: var(--text-muted);
         font-size: 0.8rem;
-        margin-left: 0.5rem;
     }
 </style>
 {% endblock %}
 
 {% block extra_js %}
 <script>
-    // Drag & Drop
     const dropZone = document.getElementById('dropZone');
     const fileInput = document.getElementById('file');
 
@@ -212,7 +182,7 @@
         if (!container) return;
         
         if (files.length > 0) {
-            let html = '<div class="alert-modern alert-info animate-fade-in"><h6 class="mb-3"><i class="fas fa-check-circle me-2"></i>已选择 ' + files.length + ' 个文件：</h6>';
+            let html = '<div style="margin-top: 12px;"><div style="font-weight: 500; color: var(--text-primary); margin-bottom: 8px; font-size: 0.9rem;">已选择 ' + files.length + ' 个文件：</div>';
             for (let i = 0; i < files.length; i++) {
                 html += '<div class="selected-file-item">' +
                     '<i class="fas fa-file"></i>' +

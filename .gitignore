@@ -18,6 +18,9 @@ env/
 *.sqlite3
 *.db
 db.sqlite3
+*.sqlite3-journal
+*.sqlite3-wal
+*.sqlite3-shm
 
 # Media files (user uploaded files)
 media/
@@ -30,6 +33,7 @@ staticfiles/
 .secret_key
 
 # Environment variables
+.env
 .env.local
 .env.production
 
@@ -54,3 +58,12 @@ Desktop.ini
 .coverage
 htmlcov/
 .coverage.*
+
+# 本地测试图片
+test_images/
+
+# Pencil 设计草稿（二进制大文件，不入库）
+*.pen
+
+# 本地文档（不入库）
+docs/

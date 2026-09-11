@@ -4,6 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}局域网网盘{% endblock %}</title>
+    <script>
+        try { document.documentElement.setAttribute('data-theme', localStorage.getItem('theme') || 'light'); }
+        catch (e) { document.documentElement.setAttribute('data-theme', 'light'); }
+    </script>
     
     <!-- Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -11,28 +15,43 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     
     <style>
-        /* ===== Design System ===== */
+        /* ===== Design System - 米黄色 + 黑金色主题 ===== */
         :root {
-            --primary-gradient: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #a855f7 100%);
-            --primary-dark: #4f46e5;
-            --primary-light: #a78bfa;
-            --accent-color: #14b8a6;
-            --accent-gradient: linear-gradient(135deg, #14b8a6 0%, #06b6d4 100%);
-            --bg-gradient: linear-gradient(135deg, #f0f4ff 0%, #faf5ff 50%, #f0fdf4 100%);
-            --card-bg: rgba(255, 255, 255, 0.85);
-            --card-border: rgba(255, 255, 255, 0.3);
-            --card-shadow: 0 8px 32px rgba(99, 102, 241, 0.08);
-            --card-shadow-hover: 0 12px 40px rgba(99, 102, 241, 0.15);
-            --text-primary: #1e293b;
-            --text-secondary: #64748b;
-            --text-muted: #94a3b8;
+            /* 浅色模式（米黄色） */
+            --bg-primary: #FDF8F0;
+            --bg-secondary: #F5EDE0;
+            --bg-card: #FFFFFF;
+            --text-primary: #2D2A26;
+            --text-secondary: #6B6560;
+            --text-muted: #9A9590;
+            --accent: #C9A962;
+            --accent-hover: #B8944D;
+            --border: #E8E0D4;
+            --danger: #DC3545;
+            --success: #28A745;
+            --warning: #FFC107;
+            --card-shadow: 0 2px 8px rgba(45, 42, 38, 0.06);
+            --card-shadow-hover: 0 4px 16px rgba(45, 42, 38, 0.1);
             --radius-sm: 8px;
             --radius-md: 12px;
             --radius-lg: 16px;
-            --radius-xl: 20px;
             --transition-fast: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
             --transition-normal: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            --transition-slow: 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        /* 深色模式（黑金色） */
+        [data-theme="dark"] {
+            --bg-primary: #1A1A1A;
+            --bg-secondary: #242424;
+            --bg-card: #2A2A2A;
+            --text-primary: #F5F5F5;
+            --text-secondary: #A0A0A0;
+            --text-muted: #707070;
+            --accent: #D4AF37;
+            --accent-hover: #E5C04B;
+            --border: #3A3A3A;
+            --card-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+            --card-shadow-hover: 0 4px 16px rgba(0, 0, 0, 0.3);
         }
 
         /* ===== Base ===== */
@@ -47,496 +66,520 @@
         }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans SC', sans-serif;
-            background: var(--bg-gradient);
-            background-attachment: fixed;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans SC', sans-serif;
+            background: var(--bg-primary);
             color: var(--text-primary);
             min-height: 100vh;
             display: flex;
-            flex-direction: column;
             line-height: 1.6;
+            transition: background-color var(--transition-normal), color var(--transition-normal);
         }
 
         ::selection {
-            background: rgba(99, 102, 241, 0.2);
-            color: var(--primary-dark);
+            background: rgba(201, 169, 98, 0.3);
+            color: var(--text-primary);
         }
 
         /* Custom Scrollbar */
         ::-webkit-scrollbar {
-            width: 8px;
-            height: 8px;
+            width: 6px;
+            height: 6px;
         }
         ::-webkit-scrollbar-track {
             background: transparent;
         }
         ::-webkit-scrollbar-thumb {
-            background: rgba(99, 102, 241, 0.2);
-            border-radius: 4px;
+            background: var(--border);
+            border-radius: 3px;
         }
         ::-webkit-scrollbar-thumb:hover {
-            background: rgba(99, 102, 241, 0.4);
+            background: var(--accent);
         }
 
-        /* ===== Navbar ===== */
-        .navbar-modern {
-            background: rgba(15, 23, 42, 0.85);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-            padding: 0.75rem 0;
-            position: sticky;
+        /* ===== Layout ===== */
+        .app-layout {
+            display: flex;
+            width: 100%;
+            min-height: 100vh;
+        }
+
+        /* ===== Sidebar ===== */
+        .sidebar {
+            width: 240px;
+            min-height: 100vh;
+            background: var(--bg-card);
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            position: fixed;
+            left: 0;
             top: 0;
-            z-index: 1030;
-            transition: var(--transition-normal);
+            z-index: 100;
+            transition: background-color var(--transition-normal), border-color var(--transition-normal);
         }
 
-        .navbar-modern .navbar-brand {
-            font-weight: 700;
-            font-size: 1.25rem;
-            background: var(--primary-gradient);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            letter-spacing: -0.02em;
+        .sidebar-logo {
+            padding: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            border-bottom: 1px solid var(--border);
         }
 
-        .navbar-modern .navbar-brand i {
-            -webkit-text-fill-color: initial;
-            color: #a855f7;
-            margin-right: 0.5rem;
-        }
-
-        .navbar-modern .nav-link {
-            color: rgba(255, 255, 255, 0.7) !important;
-            font-weight: 500;
-            padding: 0.5rem 1rem;
+        .sidebar-logo-icon {
+            width: 40px;
+            height: 40px;
+            background: var(--accent);
             border-radius: var(--radius-sm);
-            transition: var(--transition-fast);
-            position: relative;
-        }
-
-        .navbar-modern .nav-link:hover,
-        .navbar-modern .nav-link.active {
-            color: #fff !important;
-            background: rgba(255, 255, 255, 0.08);
-        }
-
-        .navbar-modern .nav-link i {
-            margin-right: 0.4rem;
-            font-size: 0.9em;
-        }
-
-        .navbar-modern .nav-link::after {
-            content: '';
-            position: absolute;
-            bottom: 2px;
-            left: 50%;
-            width: 0;
-            height: 2px;
-            background: var(--primary-gradient);
-            border-radius: 1px;
-            transition: var(--transition-normal);
-            transform: translateX(-50%);
-        }
-
-        .navbar-modern .nav-link:hover::after {
-            width: 60%;
-        }
-
-        .navbar-modern .navbar-toggler {
-            border: none;
-            padding: 0.5rem;
-            color: rgba(255, 255, 255, 0.7);
-        }
-
-        .navbar-modern .navbar-toggler:focus {
-            box-shadow: none;
-        }
-
-        .navbar-modern .dropdown-menu {
-            background: rgba(15, 23, 42, 0.95);
-            backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            border-radius: var(--radius-md);
-            padding: 0.5rem;
-            margin-top: 0.5rem;
-            box-shadow: var(--card-shadow);
-        }
-
-        .navbar-modern .dropdown-item {
-            color: rgba(255, 255, 255, 0.75);
-            border-radius: var(--radius-sm);
-            padding: 0.6rem 1rem;
-            transition: var(--transition-fast);
-        }
-
-        .navbar-modern .dropdown-item:hover {
-            color: #fff;
-            background: rgba(255, 255, 255, 0.08);
-        }
-
-        .navbar-modern .dropdown-item i {
-            width: 1.5rem;
-            text-align: center;
-        }
-
-        .navbar-modern .dropdown-divider {
-            border-color: rgba(255, 255, 255, 0.08);
-        }
-
-        .navbar-modern .user-avatar {
-            display: inline-flex;
+            display: flex;
             align-items: center;
             justify-content: center;
-            width: 32px;
-            height: 32px;
-            border-radius: 50%;
-            background: var(--primary-gradient);
             color: #fff;
-            font-size: 0.75rem;
+            font-size: 1.2rem;
+        }
+
+        .sidebar-logo-text {
             font-weight: 700;
-            margin-right: 0.5rem;
-        }
-
-        /* ===== Main Content ===== */
-        .main-content {
-            flex: 1;
-            padding: 1.5rem 0;
-            animation: fadeInUp 0.5s ease-out;
-        }
-
-        @keyframes fadeInUp {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
-        }
-
-        @keyframes scaleIn {
-            from { opacity: 0; transform: scale(0.95); }
-            to { opacity: 1; transform: scale(1); }
-        }
-
-        @keyframes shimmer {
-            0% { background-position: -200% 0; }
-            100% { background-position: 200% 0; }
-        }
-
-        /* ===== Modern Card ===== */
-        .card-modern {
-            background: var(--card-bg);
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
-            border: 1px solid var(--card-border);
-            border-radius: var(--radius-lg);
-            box-shadow: var(--card-shadow);
-            transition: var(--transition-normal);
-            overflow: hidden;
-        }
-
-        .card-modern:hover {
-            box-shadow: var(--card-shadow-hover);
-            transform: translateY(-2px);
-        }
-
-        .card-modern .card-header {
-            background: transparent;
-            border-bottom: 1px solid rgba(99, 102, 241, 0.08);
-            padding: 1.25rem 1.5rem;
-            font-weight: 600;
-        }
-
-        .card-modern .card-body {
-            padding: 1.5rem;
-        }
-
-        .card-modern .card-footer {
-            background: transparent;
-            border-top: 1px solid rgba(99, 102, 241, 0.08);
-            padding: 1rem 1.5rem;
-        }
-
-        /* ===== Gradient Header ===== */
-        .header-gradient {
-            background: var(--primary-gradient);
-            color: #fff;
-            border-radius: var(--radius-lg) !important;
-            padding: 1.5rem;
-            margin-bottom: 1.5rem;
-        }
-
-        .header-gradient h2, .header-gradient h4 {
-            font-weight: 700;
-            letter-spacing: -0.02em;
-        }
-
-        .header-gradient .mb-0 {
+            font-size: 1.1rem;
             color: var(--text-primary);
         }
 
-        .header-gradient i {
-            opacity: 0.9;
+        .sidebar-nav {
+            flex: 1;
+            padding: 1rem 0.75rem;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .sidebar-nav-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 0.75rem 1rem;
+            border-radius: var(--radius-sm);
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 0.9rem;
+            transition: all var(--transition-fast);
+            border: none;
+            background: none;
+            width: 100%;
+            cursor: pointer;
+        }
+
+        .sidebar-nav-item:hover {
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+        }
+
+        .sidebar-nav-item.active {
+            background: var(--accent);
+            color: #fff;
+        }
+
+        .sidebar-nav-item i {
+            width: 20px;
+            text-align: center;
+        }
+
+        .sidebar-footer {
+            padding: 1rem 0.75rem;
+            border-top: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .sidebar-user {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 0.75rem 1rem;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            position: relative;
+        }
+
+        .sidebar-user:hover {
+            background: var(--bg-secondary);
+        }
+
+        .sidebar-user-avatar {
+            width: 32px;
+            height: 32px;
+            background: var(--accent);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            font-weight: 600;
+            font-size: 0.85rem;
+        }
+
+        .sidebar-user-name {
+            font-weight: 500;
+            color: var(--text-primary);
+            font-size: 0.9rem;
+            flex: 1;
+        }
+
+        .sidebar-user-menu {
+            position: absolute;
+            bottom: 100%;
+            left: 0;
+            right: 0;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            box-shadow: var(--card-shadow-hover);
+            padding: 4px;
+            display: none;
+            z-index: 200;
+        }
+
+        .sidebar-user:hover .sidebar-user-menu {
+            display: block;
+        }
+
+        .sidebar-user-menu a,
+        .sidebar-user-menu button {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 12px;
+            border-radius: 4px;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.85rem;
+            width: 100%;
+            border: none;
+            background: none;
+            cursor: pointer;
+            text-align: left;
+        }
+
+        .sidebar-user-menu a:hover,
+        .sidebar-user-menu button:hover {
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+        }
+
+        .sidebar-user-menu .menu-divider {
+            height: 1px;
+            background: var(--border);
+            margin: 4px 0;
+        }
+
+        /* ===== Main Content ===== */
+        .main-wrapper {
+            flex: 1;
+            margin-left: 240px;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        /* ===== Content Area ===== */
+        .content-area {
+            flex: 1;
+            padding: 1.5rem 2rem;
+            background: var(--bg-primary);
         }
 
         /* ===== Breadcrumb ===== */
         .breadcrumb-modern {
-            background: transparent;
-            padding: 0;
+            display: flex;
+            align-items: center;
+            gap: 8px;
             margin-bottom: 1.25rem;
+            font-size: 0.9rem;
         }
 
-        .breadcrumb-modern .breadcrumb-item {
-            font-size: 0.875rem;
-        }
-
-        .breadcrumb-modern .breadcrumb-item a {
-            color: var(--primary-dark);
+        .breadcrumb-modern a {
+            color: var(--text-secondary);
             text-decoration: none;
-            transition: var(--transition-fast);
+            transition: color var(--transition-fast);
         }
 
-        .breadcrumb-modern .breadcrumb-item a:hover {
-            color: var(--primary-light);
+        .breadcrumb-modern a:hover {
+            color: var(--accent);
         }
 
-        .breadcrumb-modern .breadcrumb-item.active {
+        .breadcrumb-modern span {
             color: var(--text-muted);
         }
 
-        .breadcrumb-modern .breadcrumb-item + .breadcrumb-item::before {
+        .breadcrumb-modern .separator {
             color: var(--text-muted);
-            content: '›';
-            font-size: 1.1em;
+        }
+
+        .breadcrumb-modern .current {
+            color: var(--text-primary);
+            font-weight: 500;
+        }
+
+        /* ===== Page Header ===== */
+        .page-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 1.5rem;
+        }
+
+        .page-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .page-actions {
+            display: flex;
+            gap: 12px;
         }
 
         /* ===== Buttons ===== */
-        .btn-modern {
+        .btn, .btn-modern {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 20px;
             border-radius: var(--radius-sm);
-            font-weight: 600;
-            padding: 0.6rem 1.25rem;
-            transition: var(--transition-fast);
-            position: relative;
-            overflow: hidden;
-        }
-
-        .btn-modern::after {
-            content: '';
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            width: 0;
-            height: 0;
-            background: rgba(255, 255, 255, 0.2);
-            border-radius: 50%;
-            transform: translate(-50%, -50%);
-            transition: width 0.6s, height 0.6s;
-        }
-
-        .btn-modern:active::after {
-            width: 300px;
-            height: 300px;
-        }
-
-        .btn-primary-modern {
-            background: var(--primary-gradient);
+            font-weight: 500;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all var(--transition-fast);
             border: none;
+            text-decoration: none;
+        }
+
+        .btn-primary, .btn-primary-modern, .btn-accent-modern {
+            background: var(--accent);
             color: #fff;
         }
 
-        .btn-primary-modern:hover {
-            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 50%, #9333ea 100%);
-            color: #fff;
+        .btn-primary:hover, .btn-primary-modern:hover, .btn-accent-modern:hover {
+            background: var(--accent-hover);
             transform: translateY(-1px);
-            box-shadow: 0 4px 16px rgba(99, 102, 241, 0.35);
         }
 
-        .btn-accent-modern {
-            background: var(--accent-gradient);
-            border: none;
-            color: #fff;
-        }
-
-        .btn-accent-modern:hover {
-            background: linear-gradient(135deg, #0d9488 0%, #0891b2 100%);
-            color: #fff;
-            transform: translateY(-1px);
-            box-shadow: 0 4px 16px rgba(20, 184, 166, 0.35);
-        }
-
-        .btn-outline-modern {
+        .btn-outline, .btn-outline-modern {
             background: transparent;
-            border: 2px solid rgba(99, 102, 241, 0.2);
-            color: var(--primary-dark);
+            border: 1px solid var(--border);
+            color: var(--text-primary);
         }
 
-        .btn-outline-modern:hover {
-            border-color: var(--primary-dark);
-            background: rgba(99, 102, 241, 0.05);
-            transform: translateY(-1px);
+        .btn-outline:hover, .btn-outline-modern:hover {
+            border-color: var(--accent);
+            color: var(--accent);
         }
 
-        .btn-danger-modern {
-            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
-            border: none;
+        .btn-danger, .btn-danger-modern {
+            background: rgba(220, 53, 69, 0.1);
+            color: var(--danger);
+        }
+
+        .btn-danger:hover, .btn-danger-modern:hover {
+            background: var(--danger);
             color: #fff;
         }
 
-        .btn-danger-modern:hover {
-            background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
-            color: #fff;
-            transform: translateY(-1px);
-            box-shadow: 0 4px 16px rgba(239, 68, 68, 0.35);
+        .app-layout .btn-sm {
+            padding: 4px 10px;
+            font-size: 0.8rem;
         }
 
-        /* ===== Form Controls ===== */
-        .form-control-modern {
-            border: 2px solid rgba(99, 102, 241, 0.12);
+        /* ===== Cards ===== */
+        .card-modern {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            box-shadow: var(--card-shadow);
+            transition: all var(--transition-normal);
+        }
+
+        .card-modern:hover {
+            box-shadow: var(--card-shadow-hover);
+        }
+
+        .card-header {
+            padding: 1rem 1.25rem;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .card-header-title {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 500;
+            color: var(--text-primary);
+        }
+
+        .card-body {
+            padding: 1.25rem;
+        }
+
+        /* ===== Badge ===== */
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+
+        .badge-accent {
+            background: rgba(201, 169, 98, 0.1);
+            color: var(--accent);
+        }
+
+        .badge-warning {
+            background: rgba(255, 193, 7, 0.1);
+            color: var(--warning);
+        }
+
+        .badge-success {
+            background: rgba(40, 167, 69, 0.1);
+            color: var(--success);
+        }
+
+        .badge-danger {
+            background: rgba(220, 53, 69, 0.1);
+            color: var(--danger);
+        }
+
+        .badge-secondary {
+            background: rgba(108, 117, 125, 0.1);
+            color: var(--text-muted);
+        }
+
+        /* ===== Alert Variants ===== */
+        .alert-modern {
+            padding: 12px 16px;
             border-radius: var(--radius-sm);
-            padding: 0.7rem 1rem;
-            font-size: 0.95rem;
-            transition: var(--transition-fast);
-            background: rgba(255, 255, 255, 0.8);
+            font-size: 0.85rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
 
-        .form-control-modern:focus {
-            border-color: var(--primary-dark);
-            box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
-            background: #fff;
+        .alert-modern.alert-warning {
+            background: rgba(255, 193, 7, 0.1);
+            color: var(--warning);
+            border: 1px solid rgba(255, 193, 7, 0.2);
         }
 
-        .form-control-modern::placeholder {
+        .alert-modern.alert-danger {
+            background: rgba(220, 53, 69, 0.1);
+            color: var(--danger);
+            border: 1px solid rgba(220, 53, 69, 0.2);
+        }
+
+        .alert-modern.alert-info {
+            background: rgba(201, 169, 98, 0.1);
+            color: var(--accent);
+            border: 1px solid rgba(201, 169, 98, 0.2);
+        }
+
+        .alert-modern.alert-success {
+            background: rgba(40, 167, 69, 0.1);
+            color: var(--success);
+            border: 1px solid rgba(40, 167, 69, 0.2);
+        }
+
+        /* ===== Badge Modern ===== */
+        .badge-modern {
+            display: inline-flex;
+            align-items: center;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+
+        /* ===== Header Gradient ===== */
+        .header-gradient {
+            background: var(--accent);
+            color: #fff;
+        }
+
+        .header-gradient i {
+            color: #fff;
+        }
+
+        /* ===== Form Controls (unified) ===== */
+        .form-input, .form-control-modern {
+            width: 100%;
+            padding: 10px 16px;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            background: var(--bg-card);
+            color: var(--text-primary);
+            font-size: 0.9rem;
+            transition: border-color var(--transition-fast);
+        }
+
+        .form-input:focus, .form-control-modern:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+
+        .form-input::placeholder, .form-control-modern::placeholder {
             color: var(--text-muted);
         }
 
         .form-label-modern {
-            font-weight: 600;
+            display: block;
+            font-weight: 500;
             color: var(--text-primary);
-            margin-bottom: 0.5rem;
+            margin-bottom: 8px;
             font-size: 0.9rem;
         }
 
         .form-text-modern {
             color: var(--text-muted);
             font-size: 0.8rem;
-            margin-top: 0.3rem;
+            margin-top: 4px;
         }
 
-        /* ===== Alerts ===== */
-        .alert-modern {
-            border: none;
-            border-radius: var(--radius-md);
-            padding: 1rem 1.25rem;
+        /* ===== Table ===== */
+        .table-modern {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .table-modern th {
+            padding: 10px 16px;
+            text-align: left;
+            font-size: 0.8rem;
             font-weight: 500;
-            animation: slideDown 0.3s ease-out;
+            color: var(--text-muted);
+            background: var(--bg-secondary);
+            border-bottom: 1px solid var(--border);
         }
 
-        @keyframes slideDown {
-            from { opacity: 0; transform: translateY(-10px); }
-            to { opacity: 1; transform: translateY(0); }
+        .table-modern td {
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--border);
+            vertical-align: middle;
         }
 
-        .alert-modern.alert-success {
-            background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
-            color: #065f46;
+        .table-modern tbody tr {
+            transition: background-color var(--transition-fast);
         }
 
-        .alert-modern.alert-error,
-        .alert-modern.alert-danger {
-            background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
-            color: #991b1b;
+        .table-modern tbody tr:hover {
+            background: var(--bg-secondary);
         }
 
-        .alert-modern.alert-warning {
-            background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
-            color: #92400e;
-        }
-
-        .alert-modern.alert-info {
-            background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
-            color: #1e40af;
-        }
-
-        /* ===== Badges ===== */
-        .badge-modern {
-            font-weight: 600;
-            padding: 0.35em 0.75em;
-            border-radius: 50px;
-            font-size: 0.75rem;
-            letter-spacing: 0.02em;
-        }
-
-        /* ===== Footer ===== */
-        .footer-modern {
-            background: rgba(15, 23, 42, 0.9);
-            backdrop-filter: blur(20px);
-            color: rgba(255, 255, 255, 0.6);
-            padding: 2rem 0;
-            margin-top: auto;
-            border-top: 1px solid rgba(255, 255, 255, 0.05);
-        }
-
-        .footer-modern p {
-            margin-bottom: 0;
-        }
-
-        .footer-modern small {
-            opacity: 0.7;
-        }
-
-        /* ===== Responsive ===== */
-        @media (max-width: 767.98px) {
-            .navbar-modern {
-                padding: 0.5rem 0;
-            }
-            
-            .navbar-modern .nav-link {
-                padding: 0.5rem 1rem;
-                border-radius: 0;
-            }
-
-            .navbar-modern .nav-link::after {
-                display: none;
-            }
-
-            .navbar-modern .navbar-collapse {
-                background: rgba(15, 23, 42, 0.98);
-                border-radius: var(--radius-md);
-                margin-top: 0.5rem;
-                padding: 0.5rem;
-                border: 1px solid rgba(255, 255, 255, 0.08);
-            }
-
-            .main-content {
-                padding: 1rem 0;
-            }
-
-            .card-modern .card-body {
-                padding: 1.25rem;
-            }
-
-            .header-gradient {
-                padding: 1.25rem;
-                border-radius: var(--radius-md) !important;
-            }
-        }
-
-        @media (max-width: 575.98px) {
-            .container {
-                padding-left: 12px;
-                padding-right: 12px;
-            }
-        }
-
-        /* ===== Loading Skeleton ===== */
-        .skeleton {
-            background: linear-gradient(90deg, #e2e8f0 25%, #f1f5f9 50%, #e2e8f0 75%);
-            background-size: 200% 100%;
-            animation: shimmer 1.5s infinite;
-            border-radius: var(--radius-sm);
+        .table-modern tbody tr.selected {
+            background: rgba(201, 169, 98, 0.08);
         }
 
         /* ===== File Icons ===== */
@@ -544,21 +587,36 @@
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            width: 44px;
-            height: 44px;
+            width: 36px;
+            height: 36px;
             border-radius: var(--radius-sm);
-            font-size: 1.25rem;
-            transition: var(--transition-fast);
+            font-size: 1rem;
         }
 
-        .file-icon-wrapper.image { background: rgba(16, 185, 129, 0.1); color: #10b981; }
-        .file-icon-wrapper.pdf { background: rgba(239, 68, 68, 0.1); color: #ef4444; }
-        .file-icon-wrapper.video { background: rgba(6, 182, 212, 0.1); color: #06b6d4; }
-        .file-icon-wrapper.archive { background: rgba(245, 158, 11, 0.1); color: #f59e0b; }
-        .file-icon-wrapper.document { background: rgba(59, 130, 246, 0.1); color: #3b82f6; }
-        .file-icon-wrapper.spreadsheet { background: rgba(16, 185, 129, 0.1); color: #10b981; }
-        .file-icon-wrapper.camera { background: rgba(139, 92, 246, 0.1); color: #8b5cf6; }
-        .file-icon-wrapper.default { background: rgba(100, 116, 139, 0.1); color: #64748b; }
+        .file-icon-wrapper.image { background: rgba(40, 167, 69, 0.1); color: #28A745; }
+        .file-icon-wrapper.pdf { background: rgba(220, 53, 69, 0.1); color: #DC3545; }
+        .file-icon-wrapper.video { background: rgba(0, 123, 255, 0.1); color: #007BFF; }
+        .file-icon-wrapper.archive { background: rgba(255, 193, 7, 0.1); color: #FFC107; }
+        .file-icon-wrapper.document { background: rgba(108, 117, 125, 0.1); color: #6C757D; }
+        .file-icon-wrapper.spreadsheet { background: rgba(40, 167, 69, 0.1); color: #28A745; }
+        .file-icon-wrapper.camera { background: rgba(128, 0, 128, 0.1); color: #800080; }
+        .file-icon-wrapper.folder { background: rgba(255, 193, 7, 0.1); color: #FFC107; }
+        .file-icon-wrapper.default { background: rgba(108, 117, 125, 0.1); color: #6C757D; }
+
+        /* ===== Animations ===== */
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .animate-fade-in {
+            animation: fadeIn 0.3s ease-out;
+        }
 
         /* ===== Empty State ===== */
         .empty-state {
@@ -567,9 +625,9 @@
         }
 
         .empty-state-icon {
-            font-size: 4rem;
+            font-size: 3rem;
             color: var(--text-muted);
-            margin-bottom: 1.5rem;
+            margin-bottom: 1rem;
             opacity: 0.5;
         }
 
@@ -584,229 +642,234 @@
             margin-bottom: 1.5rem;
         }
 
-        /* ===== Table Modern ===== */
-        .table-modern {
-            margin-bottom: 0;
+        /* ===== Mobile Topbar + Overlay ===== */
+        .mobile-topbar {
+            display: none;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 1rem;
         }
 
-        .table-modern thead th {
-            background: rgba(99, 102, 241, 0.04);
-            border-bottom: 2px solid rgba(99, 102, 241, 0.08);
-            color: var(--text-secondary);
-            font-weight: 600;
-            font-size: 0.8rem;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            padding: 0.75rem 1rem;
-        }
-
-        .table-modern tbody tr {
-            transition: var(--transition-fast);
-        }
-
-        .table-modern tbody tr:hover {
-            background: rgba(99, 102, 241, 0.03);
-        }
-
-        .table-modern tbody td {
-            padding: 0.75rem 1rem;
-            vertical-align: middle;
-            border-bottom: 1px solid rgba(99, 102, 241, 0.05);
-        }
-
-        /* ===== Animation utility ===== */
-        .animate-fade-in {
-            animation: fadeIn 0.5s ease-out;
-        }
-
-        .animate-scale-in {
-            animation: scaleIn 0.3s ease-out;
-        }
-
-        /* ===== Grid layout for files ===== */
-        .file-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-            gap: 1rem;
-        }
-
-        .file-card {
-            background: var(--card-bg);
-            border: 1px solid var(--card-border);
-            border-radius: var(--radius-md);
-            padding: 1.25rem;
-            text-align: center;
-            cursor: pointer;
-            transition: var(--transition-normal);
-            position: relative;
-        }
-
-        .file-card:hover {
-            box-shadow: var(--card-shadow-hover);
-            transform: translateY(-4px);
-        }
-
-        .file-card .file-icon-big {
-            font-size: 2.5rem;
-            margin-bottom: 0.75rem;
-        }
-
-        .file-card .file-name {
-            font-weight: 600;
-            font-size: 0.85rem;
+        .mobile-menu-btn {
+            width: 40px;
+            height: 40px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--border);
+            background: var(--bg-card);
             color: var(--text-primary);
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
+            cursor: pointer;
         }
 
-        .file-card .file-meta {
-            font-size: 0.75rem;
-            color: var(--text-muted);
-            margin-top: 0.25rem;
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.4);
+            z-index: 90;
         }
 
-        .file-card .file-actions {
-            position: absolute;
-            top: 0.5rem;
-            right: 0.5rem;
-            opacity: 0;
-            transition: var(--transition-fast);
+        .sidebar-overlay.show {
+            display: block;
         }
 
-        .file-card:hover .file-actions {
-            opacity: 1;
+        /* ===== Responsive ===== */
+        @media (max-width: 768px) {
+            .mobile-topbar {
+                display: flex;
+            }
+            .sidebar {
+                transform: translateX(-100%);
+            }
+            
+            .sidebar.show {
+                transform: translateX(0);
+            }
+            
+            .main-wrapper {
+                margin-left: 0;
+            }
+            
+            .content-area {
+                padding: 1rem;
+            }
+            
+            .page-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 12px;
+            }
+            
+            .page-actions {
+                width: 100%;
+            }
+            
+            .page-actions .btn {
+                flex: 1;
+                justify-content: center;
+            }
         }
     </style>
     
     {% block extra_css %}{% endblock %}
 </head>
 <body>
-    <!-- Navbar -->
-    <nav class="navbar navbar-expand-lg navbar-modern">
-        <div class="container">
-            <a class="navbar-brand" href="{% url 'storage:file_list' %}">
-                <i class="fas fa-cloud"></i>局域网网盘
-            </a>
+    <div class="app-layout">
+        <!-- Sidebar -->
+        {% if user.is_authenticated %}
+        <aside class="sidebar">
+            <div class="sidebar-logo">
+                <div class="sidebar-logo-icon">
+                    <i class="fas fa-cloud"></i>
+                </div>
+                <span class="sidebar-logo-text">局域网网盘</span>
+            </div>
             
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" 
-                    aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
-                <i class="fas fa-bars"></i>
-            </button>
+            <nav class="sidebar-nav">
+                <a href="{% url 'storage:file_list' %}" class="sidebar-nav-item {% if request.resolver_match.app_name == 'storage' and 'upload' not in request.path %}active{% endif %}">
+                    <i class="fas fa-home"></i>
+                    首页
+                </a>
+                <a href="{% url 'storage:file_upload' %}" class="sidebar-nav-item {% if 'upload' in request.path %}active{% endif %}">
+                    <i class="fas fa-upload"></i>
+                    上传文件
+                </a>
+                <a href="{% url 'share:my_shares' %}" class="sidebar-nav-item {% if request.resolver_match.app_name == 'share' %}active{% endif %}">
+                    <i class="fas fa-share-alt"></i>
+                    我的分享
+                </a>
+                <a href="{% url 'search:search_files' %}" class="sidebar-nav-item {% if request.resolver_match.app_name == 'search' %}active{% endif %}">
+                    <i class="fas fa-search"></i>
+                    搜索
+                </a>
+                {% if user.is_staff %}
+                <a href="{% url 'accounts:user_management' %}" class="sidebar-nav-item {% if 'manage' in request.path %}active{% endif %}">
+                    <i class="fas fa-user-shield"></i>
+                    用户管理
+                </a>
+                {% endif %}
+            </nav>
             
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav me-auto">
-                    {% if user.is_authenticated %}
-                    <li class="nav-item">
-                        <a class="nav-link" href="{% url 'storage:file_list' %}">
-                            <i class="fas fa-home"></i>首页
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{% url 'storage:file_upload' %}">
-                            <i class="fas fa-upload"></i>上传
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{% url 'storage:folder_create' %}">
-                            <i class="fas fa-folder-plus"></i>新建文件夹
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{% url 'search:search_files' %}">
-                            <i class="fas fa-search"></i>搜索
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{% url 'share:my_shares' %}">
-                            <i class="fas fa-share-alt"></i>我的分享
-                        </a>
-                    </li>
-                    {% endif %}
-                </ul>
+            <div class="sidebar-footer">
+                <button class="sidebar-nav-item" id="themeToggle" type="button">
+                    <i class="fas fa-moon"></i>
+                    <span>切换主题</span>
+                </button>
                 
-                <ul class="navbar-nav">
-                    {% if user.is_authenticated %}
-                    <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" 
-                           data-bs-toggle="dropdown" aria-expanded="false">
-                            <span class="user-avatar">{{ user.username|first|upper }}</span>
-                            {{ user.username }}
-                        </a>
-                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
-                            <li>
-                                <a class="dropdown-item" href="#">
-                                    <i class="fas fa-user-circle"></i>个人资料
-                                </a>
-                            </li>
-                            <li><hr class="dropdown-divider"></li>
-                            <li>
-                                <a class="dropdown-item" href="{% url 'accounts:logout' %}">
-                                    <i class="fas fa-sign-out-alt"></i>退出登录
-                                </a>
-                            </li>
-                        </ul>
-                    </li>
-                    {% else %}
-                    <li class="nav-item">
-                        <a class="nav-link" href="{% url 'accounts:login' %}">
-                            <i class="fas fa-sign-in-alt"></i>登录
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{% url 'accounts:register' %}">
-                            <i class="fas fa-user-plus"></i>注册
-                        </a>
-                    </li>
-                    {% endif %}
-                </ul>
-            </div>
-        </div>
-    </nav>
-
-    <!-- Main Content -->
-    <main class="main-content">
-        <div class="container">
-            <!-- Messages -->
-            {% if messages %}
-            <div class="messages mb-4 animate-fade-in">
-                {% for message in messages %}
-                <div class="alert alert-modern alert-{{ message.tags }} alert-dismissible fade show" role="alert">
-                    <i class="fas fa-{% if message.tags == 'success' %}check-circle{% elif message.tags == 'error' or message.tags == 'danger' %}exclamation-circle{% elif message.tags == 'warning' %}exclamation-triangle{% else %}info-circle{% endif %} me-2"></i>
-                    {{ message }}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                </div>
-                {% endfor %}
-            </div>
-            {% endif %}
-
-            <!-- Breadcrumb -->
-            {% block breadcrumb %}{% endblock %}
-
-            <!-- Page Content -->
-            {% block content %}{% endblock %}
-        </div>
-    </main>
-
-    <!-- Footer -->
-    <footer class="footer-modern">
-        <div class="container">
-            <div class="row align-items-center">
-                <div class="col-md-6 text-center text-md-start">
-                    <p class="mb-0">
-                        <i class="fas fa-cloud me-2" style="color: #a855f7;"></i>
-                        局域网网盘 <span style="opacity:0.5;">&copy; {% now "Y" %}</span>
-                    </p>
-                </div>
-                <div class="col-md-6 text-center text-md-end">
-                    <small>基于 Django 构建 · 安全可靠 · 极速传输</small>
+                <div class="sidebar-user">
+                    <div class="sidebar-user-avatar">{{ user.username|first|upper }}</div>
+                    <span class="sidebar-user-name">{{ user.username }}</span>
+                    <i class="fas fa-chevron-up" style="color: var(--text-muted); font-size: 0.7rem;"></i>
+                    
+                    <div class="sidebar-user-menu">
+                        <div style="padding: 8px 12px; font-size: 0.8rem; color: var(--text-muted); border-bottom: 1px solid var(--border);">
+                            {{ user.email|default:"未设置邮箱" }}
+                            {% if storage_usage_display %}
+                            <div style="margin-top: 4px;">容量：{{ storage_usage_display }} / {{ storage_quota_display }}</div>
+                            {% endif %}
+                            {% if is_frozen %}
+                            <div style="margin-top: 4px;"><span class="badge badge-danger">已冻结，仅可预览</span></div>
+                            {% endif %}
+                        </div>
+                        <form method="post" action="{% url 'accounts:logout' %}">
+                            {% csrf_token %}
+                            <button type="submit">
+                                <i class="fas fa-sign-out-alt"></i> 退出登录
+                            </button>
+                        </form>
+                    </div>
                 </div>
             </div>
+        </aside>
+        {% endif %}
+
+        <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+        <!-- Main Content -->
+        <div class="main-wrapper" {% if not user.is_authenticated %}style="margin-left: 0;"{% endif %}>
+            <!-- Content Area -->
+            <main class="content-area">
+                <div class="mobile-topbar">
+                    <button class="mobile-menu-btn" id="sidebarToggle" type="button" aria-label="菜单">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                    <span style="font-weight: 700;">局域网网盘</span>
+                </div>
+                <!-- Messages -->
+                {% if messages %}
+                <div class="messages mb-4 animate-fade-in">
+                    {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert" style="background: {% if message.tags == 'success' %}rgba(40, 167, 69, 0.1){% elif message.tags == 'error' or message.tags == 'danger' %}rgba(220, 53, 69, 0.1){% elif message.tags == 'warning' %}rgba(255, 193, 7, 0.1){% else %}rgba(201, 169, 98, 0.1){% endif %}; color: {% if message.tags == 'success' %}#28A745{% elif message.tags == 'error' or message.tags == 'danger' %}#DC3545{% elif message.tags == 'warning' %}#FFC107{% else %}var(--accent){% endif %}; border-radius: 8px; padding: 12px 16px;">
+                        <i class="fas fa-{% if message.tags == 'success' %}check-circle{% elif message.tags == 'error' or message.tags == 'danger' %}exclamation-circle{% elif message.tags == 'warning' %}exclamation-triangle{% else %}info-circle{% endif %} me-2"></i>
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+
+                <!-- Breadcrumb -->
+                {% block breadcrumb %}{% endblock %}
+
+                <!-- Page Content -->
+                {% block content %}{% endblock %}
+            </main>
         </div>
-    </footer>
+    </div>
 
     <!-- Bootstrap 5 JS Bundle with Popper -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Theme + Sidebar Script -->
+    <script>
+        (function() {
+            var html = document.documentElement;
+            
+            // Theme already pre-set in <head>; just sync icon
+            var savedTheme = html.getAttribute('data-theme') || localStorage.getItem('theme') || 'light';
+            html.setAttribute('data-theme', savedTheme);
+            updateThemeIcon(savedTheme);
+            
+            function updateThemeIcon(theme) {
+                var icon = document.querySelector('#themeToggle i');
+                if (icon) {
+                    icon.className = theme === 'dark' ? 'fas fa-sun' : 'fas fa-moon';
+                }
+            }
+            
+            function toggleTheme() {
+                var currentTheme = html.getAttribute('data-theme');
+                var newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+                html.setAttribute('data-theme', newTheme);
+                localStorage.setItem('theme', newTheme);
+                updateThemeIcon(newTheme);
+            }
+            
+            var themeToggle = document.getElementById('themeToggle');
+            if (themeToggle) themeToggle.addEventListener('click', toggleTheme);
+
+            var sidebarToggle = document.getElementById('sidebarToggle');
+            var overlay = document.getElementById('sidebarOverlay');
+            function closeSidebar() {
+                var sb = document.querySelector('.sidebar');
+                if (sb) sb.classList.remove('show');
+                if (overlay) overlay.classList.remove('show');
+            }
+            if (sidebarToggle) sidebarToggle.addEventListener('click', function() {
+                var sb = document.querySelector('.sidebar');
+                if (sb) sb.classList.toggle('show');
+                if (overlay) overlay.classList.toggle('show');
+            });
+            if (overlay) overlay.addEventListener('click', closeSidebar);
+            document.querySelectorAll('.sidebar-nav-item').forEach(function(item) {
+                item.addEventListener('click', function() {
+                    if (window.innerWidth <= 768) closeSidebar();
+                });
+            });
+        })();
+    </script>
     
     {% block extra_js %}{% endblock %}
 </body>

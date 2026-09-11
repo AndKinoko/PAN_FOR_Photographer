@@ -6,47 +6,45 @@
 {% block extra_css %}
 <style>
     .auth-wrapper {
-        min-height: calc(100vh - 280px);
+        min-height: calc(100vh - 48px);
         display: flex;
         align-items: center;
         justify-content: center;
         padding: 2rem 0;
     }
     .auth-card {
-        max-width: 440px;
+        max-width: 400px;
         width: 100%;
-        animation: scaleIn 0.4s ease-out;
     }
-    .auth-card .brand-icon {
+    .brand-icon {
         width: 64px;
         height: 64px;
-        background: var(--primary-gradient);
+        background: var(--accent);
         border-radius: 16px;
         display: flex;
         align-items: center;
         justify-content: center;
         font-size: 1.75rem;
         color: #fff;
-        margin: 0 auto 1rem;
-        box-shadow: 0 8px 24px rgba(99, 102, 241, 0.25);
+        margin: 0 auto 20px;
     }
-    .auth-card .auth-title {
+    .auth-title {
         text-align: center;
-        margin-bottom: 1.5rem;
+        margin-bottom: 24px;
     }
-    .auth-card .auth-title h4 {
+    .auth-title h4 {
         font-weight: 700;
         color: var(--text-primary);
-        margin-bottom: 0.25rem;
+        margin-bottom: 4px;
     }
-    .auth-card .auth-title p {
-        color: var(--text-secondary);
+    .auth-title p {
+        color: var(--text-muted);
         font-size: 0.9rem;
     }
     .auth-divider {
         display: flex;
         align-items: center;
-        margin: 1.5rem 0;
+        margin: 20px 0;
         color: var(--text-muted);
         font-size: 0.85rem;
     }
@@ -55,10 +53,10 @@
         content: '';
         flex: 1;
         height: 1px;
-        background: rgba(99, 102, 241, 0.1);
+        background: var(--border);
     }
-    .auth-divider::before { margin-right: 1rem; }
-    .auth-divider::after { margin-left: 1rem; }
+    .auth-divider::before { margin-right: 12px; }
+    .auth-divider::after { margin-left: 12px; }
 </style>
 {% endblock %}
 
@@ -66,7 +64,7 @@
 <div class="auth-wrapper">
     <div class="auth-card">
         <div class="card-modern">
-            <div class="card-body p-4">
+            <div class="card-body" style="padding: 32px;">
                 <div class="brand-icon">
                     <i class="fas fa-cloud"></i>
                 </div>
@@ -77,8 +75,8 @@
                 </div>
 
                 {% if form.errors %}
-                <div class="alert alert-modern alert-danger animate-fade-in">
-                    <i class="fas fa-exclamation-circle me-2"></i>
+                <div style="padding: 12px 16px; background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.2); border-radius: var(--radius-sm); margin-bottom: 16px; color: var(--danger); font-size: 0.85rem;">
+                    <i class="fas fa-exclamation-circle" style="margin-right: 8px;"></i>
                     {% if form.non_field_errors %}
                         {{ form.non_field_errors|join:"， " }}
                     {% else %}
@@ -94,34 +92,33 @@
                         <input type="hidden" name="next" value="{{ next }}">
                     {% endif %}
                     
-                    <div class="mb-3">
-                        <label for="id_username" class="form-label-modern">用户名</label>
-                        <input type="text" class="form-control form-control-modern" id="id_username" name="username" 
+                    <div style="margin-bottom: 16px;">
+                        <label for="id_username" style="display: block; font-weight: 500; color: var(--text-primary); margin-bottom: 8px; font-size: 0.9rem;">用户名</label>
+                        <input type="text" class="form-input" id="id_username" name="username" 
                                required autofocus value="{{ form.username.value|default:'' }}"
                                placeholder="请输入用户名">
                     </div>
                     
-                    <div class="mb-4">
-                        <label for="id_password" class="form-label-modern">密码</label>
-                        <input type="password" class="form-control form-control-modern" id="id_password" name="password" 
+                    <div style="margin-bottom: 24px;">
+                        <label for="id_password" style="display: block; font-weight: 500; color: var(--text-primary); margin-bottom: 8px; font-size: 0.9rem;">密码</label>
+                        <input type="password" class="form-input" id="id_password" name="password" 
                                required placeholder="请输入密码">
                     </div>
                     
-                    <button type="submit" class="btn btn-primary-modern btn-modern w-100 py-2" id="submit-btn">
-                        <i class="fas fa-sign-in-alt me-2"></i>登录
+                    <button type="submit" class="btn btn-primary" style="width: 100%; justify-content: center; padding: 12px;" id="submit-btn">
+                        <i class="fas fa-sign-in-alt"></i> 登录
                     </button>
                 </form>
                 
                 <div class="auth-divider">还没有账号？</div>
                 
-                <a href="{% url 'accounts:register' %}" class="btn btn-outline-modern btn-modern w-100">
-                    <i class="fas fa-user-plus me-2"></i>注册新账号
+                <a href="{% url 'accounts:register' %}" class="btn btn-outline" style="width: 100%; justify-content: center;">
+                    <i class="fas fa-user-plus"></i> 注册新账号
                 </a>
                 
-                <div class="text-center mt-3">
-                    <a href="{% url 'accounts:password_reset' %}" class="text-decoration-none small" 
-                       style="color: var(--text-muted);">
-                        <i class="fas fa-key me-1"></i>忘记密码？
+                <div style="text-align: center; margin-top: 16px;">
+                    <a href="{% url 'accounts:password_reset' %}" style="color: var(--text-muted); font-size: 0.85rem; text-decoration: none;">
+                        <i class="fas fa-key" style="margin-right: 4px;"></i>忘记密码？
                     </a>
                 </div>
             </div>
@@ -154,7 +151,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
             
             const submitBtn = this.querySelector('button[type="submit"]');
-            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>登录中...';
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 登录中...';
             submitBtn.disabled = true;
         });
     }

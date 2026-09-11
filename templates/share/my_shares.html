@@ -3,92 +3,107 @@
 
 {% block title %}我的分享 - 局域网网盘{% endblock %}
 
+{% block breadcrumb %}
+<div class="breadcrumb-modern">
+    <a href="{% url 'storage:file_list' %}">
+        <i class="fas fa-home"></i> 首页
+    </a>
+    <span class="separator">/</span>
+    <span class="current">我的分享</span>
+</div>
+{% endblock %}
+
 {% block content %}
-<div class="animate-fade-in">
-    <div class="card-modern">
-        <div class="card-header d-flex justify-content-between align-items-center">
-            <h4 class="mb-0"><i class="fas fa-share-alt me-2"></i>我的文件分享</h4>
-            <a href="{% url 'storage:file_list' %}" class="btn btn-outline-modern btn-modern btn-sm">
-                <i class="fas fa-folder me-1"></i> 返回文件列表
+<div class="page-header">
+    <h1 class="page-title">
+        <i class="fas fa-share-alt" style="color: var(--accent); margin-right: 12px;"></i>我的分享
+    </h1>
+    <div class="page-actions">
+        <a href="{% url 'storage:file_list' %}" class="btn btn-outline">
+            <i class="fas fa-folder"></i> 返回文件列表
+        </a>
+    </div>
+</div>
+
+{% if shares %}
+<div class="card-modern">
+    <div class="card-body" style="padding: 0;">
+        <table class="table-modern">
+            <thead>
+                <tr>
+                    <th>文件名</th>
+                    <th style="width: 100px;">分享ID</th>
+                    <th style="width: 120px;">创建时间</th>
+                    <th style="width: 120px;">过期时间</th>
+                    <th style="width: 80px;">下载次数</th>
+                    <th style="width: 80px;">密码保护</th>
+                    <th style="width: 120px;">操作</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for share in shares %}
+                <tr>
+                    <td>
+                        <div style="display: flex; align-items: center; gap: 12px;">
+                            <div class="file-icon-wrapper default">
+                                <i class="fas fa-file"></i>
+                            </div>
+                            <span style="font-weight: 500; color: var(--text-primary);">{{ share.file.original_name }}</span>
+                        </div>
+                    </td>
+                    <td>
+                        <code style="padding: 4px 8px; background: var(--bg-secondary); border-radius: 4px; font-size: 0.8rem; color: var(--accent);">{{ share.share_id }}</code>
+                    </td>
+                    <td style="color: var(--text-muted); font-size: 0.85rem;">{{ share.created_at|date:"Y-m-d" }}</td>
+                    <td>
+                        {% if share.expires_at %}
+                        <span style="color: var(--text-muted); font-size: 0.85rem;">{{ share.expires_at|date:"Y-m-d" }}</span>
+                        {% else %}
+                        <span class="badge badge-success"><i class="fas fa-infinity"></i> 永久</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <span class="badge badge-accent">
+                            <i class="fas fa-download" style="margin-right: 4px;"></i>{{ share.download_count }}
+                        </span>
+                    </td>
+                    <td>
+                        {% if share.password %}
+                        <span class="badge badge-warning"><i class="fas fa-lock" style="margin-right: 4px;"></i>有</span>
+                        {% else %}
+                        <span class="badge badge-secondary"><i class="fas fa-unlock" style="margin-right: 4px;"></i>无</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <div style="display: flex; gap: 8px;">
+                            <a href="{% url 'share:share_detail' share.id %}" class="btn btn-outline" style="padding: 6px 12px; font-size: 0.8rem;">
+                                <i class="fas fa-eye"></i> 详情
+                            </a>
+                            <a href="{% url 'share:delete_share' share.id %}" class="btn btn-danger" style="padding: 6px 12px; font-size: 0.8rem;">
+                                <i class="fas fa-trash"></i> 删除
+                            </a>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% else %}
+<div class="card-modern">
+    <div class="card-body">
+        <div class="empty-state">
+            <div class="empty-state-icon">
+                <i class="fas fa-share-alt"></i>
+            </div>
+            <h4>暂无分享文件</h4>
+            <p>您还没有创建任何文件分享链接</p>
+            <a href="{% url 'storage:file_list' %}" class="btn btn-primary">
+                <i class="fas fa-upload"></i> 去上传文件并分享
             </a>
-        </div>
-        <div class="card-body">
-            {% if shares %}
-                <div class="table-responsive">
-                    <table class="table table-modern">
-                        <thead>
-                            <tr>
-                                <th>文件名</th>
-                                <th>分享ID</th>
-                                <th>创建时间</th>
-                                <th>过期时间</th>
-                                <th>下载次数</th>
-                                <th>密码保护</th>
-                                <th>操作</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for share in shares %}
-                            <tr>
-                                <td>
-                                    <div class="d-flex align-items-center">
-                                        <div class="file-icon-wrapper default me-2" style="width: 32px; height: 32px; font-size: 0.9rem;">
-                                            <i class="fas fa-file"></i>
-                                        </div>
-                                        {{ share.file.original_name }}
-                                    </div>
-                                </td>
-                                <td>
-                                    <code>{{ share.share_id }}</code>
-                                </td>
-                                <td>{{ share.created_at|date:"Y-m-d H:i" }}</td>
-                                <td>
-                                    {% if share.expires_at %}
-                                        {{ share.expires_at|date:"Y-m-d H:i" }}
-                                    {% else %}
-                                        <span class="badge badge-modern" style="background: rgba(16,185,129,0.1); color: #059669;"><i class="fas fa-infinity me-1"></i>永久</span>
-                                    {% endif %}
-                                </td>
-                                <td>
-                                    <span class="badge badge-modern" style="background: rgba(99,102,241,0.08); color: #6366f1;">
-                                        <i class="fas fa-download me-1"></i>{{ share.download_count }}
-                                    </span>
-                                </td>
-                                <td>
-                                    {% if share.password %}
-                                        <span class="badge badge-modern" style="background: rgba(245,158,11,0.12); color: #d97706;"><i class="fas fa-lock me-1"></i>有</span>
-                                    {% else %}
-                                        <span class="badge badge-modern" style="background: rgba(100,116,139,0.1); color: #64748b;"><i class="fas fa-unlock me-1"></i>无</span>
-                                    {% endif %}
-                                </td>
-                                <td>
-                                    <div class="btn-group btn-group-sm" role="group">
-                                        <a href="{% url 'share:share_detail' share.id %}" class="btn btn-outline-modern btn-modern btn-sm">
-                                            <i class="fas fa-eye"></i> 详情
-                                        </a>
-                                        <a href="{% url 'share:delete_share' share.id %}" class="btn btn-outline-modern btn-modern btn-sm" style="border-color: rgba(239,68,68,0.2); color: #ef4444;">
-                                            <i class="fas fa-trash-alt"></i> 删除
-                                        </a>
-                                    </div>
-                                </td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-            {% else %}
-                <div class="empty-state">
-                    <div class="empty-state-icon">
-                        <i class="fas fa-share-alt"></i>
-                    </div>
-                    <h4>暂无分享文件</h4>
-                    <p>您还没有创建任何文件分享链接</p>
-                    <a href="{% url 'storage:file_list' %}" class="btn btn-primary-modern btn-modern">
-                        <i class="fas fa-upload me-1"></i> 去上传文件并分享
-                    </a>
-                </div>
-            {% endif %}
         </div>
     </div>
 </div>
+{% endif %}
 {% endblock %}
