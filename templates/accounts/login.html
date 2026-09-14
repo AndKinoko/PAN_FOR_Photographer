@@ -5,119 +5,141 @@
 
 {% block extra_css %}
 <style>
-    .auth-wrapper {
-        min-height: calc(100vh - 48px);
+    .auth-page {
+        min-height: calc(100vh - var(--header-height));
         display: flex;
         align-items: center;
         justify-content: center;
-        padding: 2rem 0;
+        padding: var(--space-8) var(--space-4);
     }
     .auth-card {
-        max-width: 400px;
+        max-width: 420px;
         width: 100%;
+        animation: scaleIn 0.4s cubic-bezier(0.4, 0, 0.2, 1);
     }
-    .brand-icon {
+    .auth-card .card-body {
+        padding: var(--space-8);
+    }
+    .auth-brand {
         width: 64px;
         height: 64px;
-        background: var(--accent);
-        border-radius: 16px;
+        background: linear-gradient(135deg, var(--accent-400), var(--accent-600));
+        border-radius: var(--radius-lg);
         display: flex;
         align-items: center;
         justify-content: center;
         font-size: 1.75rem;
         color: #fff;
-        margin: 0 auto 20px;
+        margin: 0 auto var(--space-5);
+        box-shadow: 0 8px 24px rgba(201, 151, 39, 0.3);
     }
-    .auth-title {
+    .auth-heading {
         text-align: center;
-        margin-bottom: 24px;
+        margin-bottom: var(--space-6);
     }
-    .auth-title h4 {
+    .auth-heading h2 {
+        font-size: 1.4rem;
         font-weight: 700;
         color: var(--text-primary);
-        margin-bottom: 4px;
+        margin-bottom: var(--space-2);
+        letter-spacing: -0.02em;
     }
-    .auth-title p {
-        color: var(--text-muted);
-        font-size: 0.9rem;
+    .auth-heading p {
+        color: var(--text-secondary);
+        font-size: 0.85rem;
     }
     .auth-divider {
         display: flex;
         align-items: center;
-        margin: 20px 0;
-        color: var(--text-muted);
-        font-size: 0.85rem;
+        margin: var(--space-5) 0;
+        color: var(--text-tertiary);
+        font-size: 0.8rem;
     }
     .auth-divider::before,
     .auth-divider::after {
         content: '';
         flex: 1;
         height: 1px;
-        background: var(--border);
+        background: var(--border-subtle);
     }
-    .auth-divider::before { margin-right: 12px; }
-    .auth-divider::after { margin-left: 12px; }
+    .auth-divider::before { margin-right: var(--space-3); }
+    .auth-divider::after { margin-left: var(--space-3); }
+    .auth-footer-link {
+        text-align: center;
+        margin-top: var(--space-4);
+    }
+    .auth-footer-link a {
+        color: var(--text-tertiary);
+        font-size: 0.8rem;
+        text-decoration: none;
+        transition: color var(--transition-fast);
+    }
+    .auth-footer-link a:hover {
+        color: var(--accent);
+    }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="auth-wrapper">
+<div class="auth-page">
     <div class="auth-card">
-        <div class="card-modern">
-            <div class="card-body" style="padding: 32px;">
-                <div class="brand-icon">
+        <div class="card">
+            <div class="card-body">
+                <div class="auth-brand">
                     <i class="fas fa-cloud"></i>
                 </div>
-                
-                <div class="auth-title">
-                    <h4>欢迎回来</h4>
+
+                <div class="auth-heading">
+                    <h2>欢迎回来</h2>
                     <p>登录您的账号以继续使用</p>
                 </div>
 
                 {% if form.errors %}
-                <div style="padding: 12px 16px; background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.2); border-radius: var(--radius-sm); margin-bottom: 16px; color: var(--danger); font-size: 0.85rem;">
-                    <i class="fas fa-exclamation-circle" style="margin-right: 8px;"></i>
-                    {% if form.non_field_errors %}
-                        {{ form.non_field_errors|join:"， " }}
-                    {% else %}
-                        用户名或密码错误，请重试。
-                    {% endif %}
+                <div class="alert alert-danger mb-4 animate-fade-in">
+                    <i class="fas fa-circle-exclamation"></i>
+                    <span>
+                        {% if form.non_field_errors %}
+                            {{ form.non_field_errors|join:"， " }}
+                        {% else %}
+                            用户名或密码错误，请重试。
+                        {% endif %}
+                    </span>
                 </div>
                 {% endif %}
-                
+
                 <form method="post" id="login-form">
                     {% csrf_token %}
-                    
+
                     {% if next %}
                         <input type="hidden" name="next" value="{{ next }}">
                     {% endif %}
-                    
-                    <div style="margin-bottom: 16px;">
-                        <label for="id_username" style="display: block; font-weight: 500; color: var(--text-primary); margin-bottom: 8px; font-size: 0.9rem;">用户名</label>
-                        <input type="text" class="form-input" id="id_username" name="username" 
+
+                    <div class="form-group">
+                        <label for="id_username" class="form-label">用户名</label>
+                        <input type="text" class="form-input" id="id_username" name="username"
                                required autofocus value="{{ form.username.value|default:'' }}"
                                placeholder="请输入用户名">
                     </div>
-                    
-                    <div style="margin-bottom: 24px;">
-                        <label for="id_password" style="display: block; font-weight: 500; color: var(--text-primary); margin-bottom: 8px; font-size: 0.9rem;">密码</label>
-                        <input type="password" class="form-input" id="id_password" name="password" 
+
+                    <div class="form-group">
+                        <label for="id_password" class="form-label">密码</label>
+                        <input type="password" class="form-input" id="id_password" name="password"
                                required placeholder="请输入密码">
                     </div>
-                    
-                    <button type="submit" class="btn btn-primary" style="width: 100%; justify-content: center; padding: 12px;" id="submit-btn">
-                        <i class="fas fa-sign-in-alt"></i> 登录
+
+                    <button type="submit" class="btn btn-primary btn-block" id="submit-btn">
+                        <i class="fas fa-right-to-bracket"></i> 登录
                     </button>
                 </form>
-                
+
                 <div class="auth-divider">还没有账号？</div>
-                
-                <a href="{% url 'accounts:register' %}" class="btn btn-outline" style="width: 100%; justify-content: center;">
+
+                <a href="{% url 'accounts:register' %}" class="btn btn-secondary btn-block">
                     <i class="fas fa-user-plus"></i> 注册新账号
                 </a>
-                
-                <div style="text-align: center; margin-top: 16px;">
-                    <a href="{% url 'accounts:password_reset' %}" style="color: var(--text-muted); font-size: 0.85rem; text-decoration: none;">
+
+                <div class="auth-footer-link">
+                    <a href="{% url 'accounts:password_reset' %}">
                         <i class="fas fa-key" style="margin-right: 4px;"></i>忘记密码？
                     </a>
                 </div>
@@ -135,27 +157,27 @@ document.addEventListener('DOMContentLoaded', function() {
         loginForm.addEventListener('submit', function(e) {
             const username = document.getElementById('id_username');
             const password = document.getElementById('id_password');
-            
+
             if (!username.value.trim()) {
                 e.preventDefault();
                 alert('请输入用户名');
                 username.focus();
                 return;
             }
-            
+
             if (!password.value.trim()) {
                 e.preventDefault();
                 alert('请输入密码');
                 password.focus();
                 return;
             }
-            
+
             const submitBtn = this.querySelector('button[type="submit"]');
             submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 登录中...';
             submitBtn.disabled = true;
         });
     }
-    
+
     const usernameInput = document.getElementById('id_username');
     if (usernameInput) usernameInput.focus();
 });

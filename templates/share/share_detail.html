@@ -3,98 +3,119 @@
 
 {% block title %}分享详情 - 局域网网盘{% endblock %}
 
+{% block breadcrumb %}
+<div class="breadcrumb">
+    <a href="{% url 'storage:file_list' %}">
+        <i class="fas fa-home"></i> 首页
+    </a>
+    <span class="sep">/</span>
+    <a href="{% url 'share:my_shares' %}">我的分享</a>
+    <span class="sep">/</span>
+    <span class="current">分享详情</span>
+</div>
+{% endblock %}
+
 {% block content %}
-<div class="row justify-content-center animate-fade-in">
-    <div class="col-md-10 col-lg-8">
-        <div class="card-modern">
-            <div class="card-header">
-                <h4 class="mb-0"><i class="fas fa-link me-2"></i>分享详情</h4>
-            </div>
-            <div class="card-body">
-                <div class="alert alert-modern alert-success">
-                    <i class="fas fa-check-circle me-2"></i>
-                    分享链接创建成功！
+<div class="page-header">
+    <div class="page-title-wrap">
+        <h1 class="page-title">
+            <i class="fas fa-link" style="color: var(--accent); margin-right: 10px;"></i>分享详情
+        </h1>
+    </div>
+</div>
+
+<div class="card" style="max-width: 720px; margin: 0 auto;">
+    <div class="card-body">
+        <div class="alert alert-success mb-5">
+            <i class="fas fa-check-circle"></i>
+            <span>分享链接创建成功！</span>
+        </div>
+
+        {# ===== 文件信息 ===== #}
+        <div class="mb-5">
+            <h3 class="card-title mb-3">
+                <i class="fas fa-file"></i>文件信息
+            </h3>
+            <div style="border: 1px solid var(--border); border-radius: var(--radius-md); overflow: hidden;">
+                <div class="flex items-center justify-between" style="padding: 12px 16px; background: var(--bg-surface-secondary); border-bottom: 1px solid var(--border-subtle);">
+                    <span class="text-secondary text-sm">文件名</span>
+                    <span class="font-semibold">{{ file.original_name }}</span>
                 </div>
-                
-                <div class="mb-4">
-                    <h5 class="mb-3"><i class="fas fa-file me-2 text-primary"></i>文件信息</h5>
-                    <div class="list-group" style="border-radius: var(--radius-md); overflow: hidden;">
-                        <div class="list-group-item d-flex justify-content-between align-items-center" style="background: rgba(99,102,241,0.02); border-color: rgba(99,102,241,0.06);">
-                            <span class="text-secondary">文件名</span>
-                            <span class="fw-semibold">{{ file.original_name }}</span>
-                        </div>
-                        <div class="list-group-item d-flex justify-content-between align-items-center" style="background: rgba(99,102,241,0.02); border-color: rgba(99,102,241,0.06);">
-                            <span class="text-secondary">文件大小</span>
-                            <span class="fw-semibold">{{ file.file.size|filesizeformat }}</span>
-                        </div>
-                        <div class="list-group-item d-flex justify-content-between align-items-center" style="background: rgba(99,102,241,0.02); border-color: rgba(99,102,241,0.06);">
-                            <span class="text-secondary">创建时间</span>
-                            <span class="fw-semibold">{{ file.uploaded_at|date:"Y-m-d H:i" }}</span>
-                        </div>
-                    </div>
+                <div class="flex items-center justify-between" style="padding: 12px 16px; background: var(--bg-surface-secondary); border-bottom: 1px solid var(--border-subtle);">
+                    <span class="text-secondary text-sm">文件大小</span>
+                    <span class="font-semibold">{{ file.file.size|filesizeformat }}</span>
                 </div>
-                
-                <div class="mb-4">
-                    <h5 class="mb-3"><i class="fas fa-share-alt me-2 text-accent" style="color: #14b8a6;"></i>分享信息</h5>
-                    <div class="list-group" style="border-radius: var(--radius-md); overflow: hidden;">
-                        <div class="list-group-item d-flex justify-content-between align-items-center" style="background: rgba(99,102,241,0.02); border-color: rgba(99,102,241,0.06);">
-                            <span class="text-secondary">分享链接</span>
-                            <span>
-                                <a href="{{ full_url }}" target="_blank" class="text-break" style="color: var(--primary-dark);">{{ full_url }}</a>
-                            </span>
-                        </div>
-                        <div class="list-group-item d-flex justify-content-between align-items-center" style="background: rgba(99,102,241,0.02); border-color: rgba(99,102,241,0.06);">
-                            <span class="text-secondary">分享ID</span>
-                            <span><code>{{ share.share_id }}</code></span>
-                        </div>
-                        <div class="list-group-item d-flex justify-content-between align-items-center" style="background: rgba(99,102,241,0.02); border-color: rgba(99,102,241,0.06);">
-                            <span class="text-secondary">创建时间</span>
-                            <span class="fw-semibold">{{ share.created_at|date:"Y-m-d H:i" }}</span>
-                        </div>
-                        <div class="list-group-item d-flex justify-content-between align-items-center" style="background: rgba(99,102,241,0.02); border-color: rgba(99,102,241,0.06);">
-                            <span class="text-secondary">过期时间</span>
-                            <span class="fw-semibold">
-                                {% if share.expires_at %}
-                                    {{ share.expires_at|date:"Y-m-d H:i" }}
-                                {% else %}
-                                    <span class="text-success"><i class="fas fa-infinity me-1"></i>永久有效</span>
-                                {% endif %}
-                            </span>
-                        </div>
-                        <div class="list-group-item d-flex justify-content-between align-items-center" style="background: rgba(99,102,241,0.02); border-color: rgba(99,102,241,0.06);">
-                            <span class="text-secondary">访问密码</span>
-                            <span>
-                                {% if share.password %}
-                                    <span class="badge badge-modern" style="background: rgba(245,158,11,0.12); color: #d97706;"><i class="fas fa-lock me-1"></i>已设置</span>
-                                {% else %}
-                                    <span class="badge badge-modern" style="background: rgba(100,116,139,0.1); color: #64748b;"><i class="fas fa-unlock me-1"></i>无</span>
-                                {% endif %}
-                            </span>
-                        </div>
-                        <div class="list-group-item d-flex justify-content-between align-items-center" style="background: rgba(99,102,241,0.02); border-color: rgba(99,102,241,0.06);">
-                            <span class="text-secondary">下载次数</span>
-                            <span class="fw-semibold"><i class="fas fa-download me-1 text-primary"></i>{{ share.download_count }}</span>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="alert alert-modern alert-warning">
-                    <i class="fas fa-exclamation-triangle me-2"></i>
-                    <strong>重要提示：</strong>请妥善保管此分享链接，任何拥有此链接的人都可以访问该文件。
-                </div>
-                
-                <div class="d-flex flex-wrap gap-2 justify-content-md-end">
-                    <a href="{% url 'share:my_shares' %}" class="btn btn-outline-modern btn-modern">
-                        <i class="fas fa-list me-1"></i> 返回我的分享
-                    </a>
-                    <a href="{% url 'storage:file_list' %}" class="btn btn-outline-modern btn-modern">
-                        <i class="fas fa-folder me-1"></i> 返回文件列表
-                    </a>
-                    <a href="{% url 'share:delete_share' share.id %}" class="btn btn-danger-modern btn-modern">
-                        <i class="fas fa-trash-alt me-1"></i> 删除分享
-                    </a>
+                <div class="flex items-center justify-between" style="padding: 12px 16px; background: var(--bg-surface-secondary);">
+                    <span class="text-secondary text-sm">上传时间</span>
+                    <span class="font-semibold">{{ file.uploaded_at|date:"Y-m-d H:i" }}</span>
                 </div>
             </div>
+        </div>
+
+        {# ===== 分享信息 ===== #}
+        <div class="mb-5">
+            <h3 class="card-title mb-3">
+                <i class="fas fa-share-nodes"></i>分享信息
+            </h3>
+            <div style="border: 1px solid var(--border); border-radius: var(--radius-md); overflow: hidden;">
+                <div class="flex items-center justify-between" style="padding: 12px 16px; background: var(--bg-surface-secondary); border-bottom: 1px solid var(--border-subtle); gap: 12px;">
+                    <span class="text-secondary text-sm" style="flex-shrink: 0;">分享链接</span>
+                    <span style="text-align: right; word-break: break-all;">
+                        <a href="{{ full_url }}" target="_blank" style="color: var(--accent);">{{ full_url }}</a>
+                    </span>
+                </div>
+                <div class="flex items-center justify-between" style="padding: 12px 16px; background: var(--bg-surface-secondary); border-bottom: 1px solid var(--border-subtle);">
+                    <span class="text-secondary text-sm">分享ID</span>
+                    <span style="padding: 3px 8px; background: var(--bg-surface); border-radius: var(--radius-xs); font-size: 0.78rem; font-family: var(--font-mono); color: var(--accent); border: 1px solid var(--border-subtle);">{{ share.share_id }}</span>
+                </div>
+                <div class="flex items-center justify-between" style="padding: 12px 16px; background: var(--bg-surface-secondary); border-bottom: 1px solid var(--border-subtle);">
+                    <span class="text-secondary text-sm">创建时间</span>
+                    <span class="font-semibold">{{ share.created_at|date:"Y-m-d H:i" }}</span>
+                </div>
+                <div class="flex items-center justify-between" style="padding: 12px 16px; background: var(--bg-surface-secondary); border-bottom: 1px solid var(--border-subtle);">
+                    <span class="text-secondary text-sm">过期时间</span>
+                    <span class="font-semibold">
+                        {% if share.expires_at %}
+                            {{ share.expires_at|date:"Y-m-d H:i" }}
+                        {% else %}
+                            <span class="badge badge-success"><i class="fas fa-infinity"></i>永久有效</span>
+                        {% endif %}
+                    </span>
+                </div>
+                <div class="flex items-center justify-between" style="padding: 12px 16px; background: var(--bg-surface-secondary); border-bottom: 1px solid var(--border-subtle);">
+                    <span class="text-secondary text-sm">访问密码</span>
+                    <span>
+                        {% if share.password %}
+                            <span class="badge badge-warning"><i class="fas fa-lock"></i>已设置</span>
+                        {% else %}
+                            <span class="badge badge-muted"><i class="fas fa-unlock"></i>无</span>
+                        {% endif %}
+                    </span>
+                </div>
+                <div class="flex items-center justify-between" style="padding: 12px 16px; background: var(--bg-surface-secondary);">
+                    <span class="text-secondary text-sm">下载次数</span>
+                    <span class="font-semibold"><i class="fas fa-download" style="color: var(--accent); margin-right: 4px;"></i>{{ share.download_count }}</span>
+                </div>
+            </div>
+        </div>
+
+        {# ===== 重要提示 ===== #}
+        <div class="alert alert-warning mb-5">
+            <i class="fas fa-triangle-exclamation"></i>
+            <span><strong>重要提示：</strong>请妥善保管此分享链接，任何拥有此链接的人都可以访问该文件。</span>
+        </div>
+
+        {# ===== 操作按钮 ===== #}
+        <div class="flex gap-2" style="justify-content: flex-end; flex-wrap: wrap;">
+            <a href="{% url 'share:my_shares' %}" class="btn btn-secondary">
+                <i class="fas fa-list"></i> 返回我的分享
+            </a>
+            <a href="{% url 'storage:file_list' %}" class="btn btn-secondary">
+                <i class="fas fa-folder"></i> 返回文件列表
+            </a>
+            <a href="{% url 'share:delete_share' share.id %}" class="btn btn-danger">
+                <i class="fas fa-trash"></i> 删除分享
+            </a>
         </div>
     </div>
 </div>

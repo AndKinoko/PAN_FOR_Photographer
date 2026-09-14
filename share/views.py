@@ -116,13 +116,13 @@ def share_download(request, share_id):
     if share.password and not request.session.get(f'share_access_{share_id}'):
         return redirect('share:share_access', share_id=share.id)
     
-    # Increment download count
-    share.increment_download()
-    
-    # Serve the file
+    # Increment download count（续传分片不重复计数）
+    if not request.META.get('HTTP_RANGE'):
+        share.increment_download()
+
+    # Serve the file（支持 Range 断点续传）
     if os.path.exists(share.file.file.path):
-        response = FileResponse(share.file.file.open('rb'))
-        response['Content-Disposition'] = f'attachment; filename="{share.file.original_name}"'
-        return response
+        from storage.views import range_file_response
+        return range_file_response(request, share.file.file.path, share.file.original_name)
     else:
         raise Http404("文件不存在")

@@ -1,8 +1,15 @@
 from django.db import models
 from django.contrib.auth.models import User
+from django.conf import settings
+from django.utils import timezone
 import os
 import logging
+import threading
 from uuid import uuid4
+
+# 预览生成串行锁：rawpy/Pillow 处理大图时内存可达 GB 级，
+# 多请求并发会叠加爆内存，串行化保证峰值≈单次处理量。
+preview_lock = threading.Lock()
 from PIL import Image
 import tempfile
 import rawpy
@@ -98,7 +105,12 @@ class File(models.Model):
                 logger.error(traceback.format_exc())
     
     def generate_preview(self):
-        """Generate preview image for the file"""
+        """Generate preview image for the file（串行执行，控制并发内存峰值）"""
+        with preview_lock:
+            self._generate_preview_locked()
+
+    def _generate_preview_locked(self):
+        """实际预览逻辑，调用方须持有 preview_lock"""
         try:
             # Define supported image formats
             image_formats = ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp', 'tiff', 'tif']
@@ -268,3 +280,63 @@ class File(models.Model):
     def delete(self, *args, **kwargs):
         """重写delete方法，删除数据库记录（物理文件由 pre_delete 信号处理）"""
         super().delete(*args, **kwargs)
+
+
+class UploadSession(models.Model):
+    """分片上传会话：断点续传依据落盘分片推导 received，无需位图字段。"""
+
+    STATUS_UPLOADING = 'uploading'
+    STATUS_DONE = 'done'
+    STATUS_CANCELLED = 'cancelled'
+    STATUS_CHOICES = [
+        (STATUS_UPLOADING, '上传中'),
+        (STATUS_DONE, '已完成'),
+        (STATUS_CANCELLED, '已取消'),
+    ]
+
+    session_id = models.CharField(max_length=32, unique=True)
+    owner = models.ForeignKey(User, on_delete=models.CASCADE, related_name='upload_sessions')
+    folder = models.ForeignKey(Folder, on_delete=models.CASCADE, null=True, blank=True,
+                               related_name='upload_sessions')
+    original_name = models.CharField(max_length=255)
+    total_size = models.BigIntegerField(default=0)
+    chunk_size = models.IntegerField(default=5 * 1024 * 1024)
+    total_chunks = models.IntegerField(default=0)
+    status = models.CharField(max_length=16, choices=STATUS_CHOICES, default=STATUS_UPLOADING)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-updated_at']
+
+    def __str__(self):
+        return f"Upload({self.owner.username}:{self.original_name})"
+
+    def temp_dir(self):
+        base = getattr(settings, 'MEDIA_ROOT', '/tmp')
+        return os.path.join(base, 'tmp_uploads', self.session_id)
+
+    def chunk_path(self, index):
+        return os.path.join(self.temp_dir(), f'chunk_{index:06d}')
+
+    def received_indices(self):
+        d = self.temp_dir()
+        if not os.path.isdir(d):
+            return []
+        out = []
+        for name in os.listdir(d):
+            if name.startswith('chunk_'):
+                try:
+                    out.append(int(name.split('_')[1]))
+                except (IndexError, ValueError):
+                    continue
+        return sorted(out)
+
+    def is_complete(self):
+        return len(self.received_indices()) >= self.total_chunks > 0
+
+    def cleanup(self):
+        import shutil
+        d = self.temp_dir()
+        if os.path.isdir(d):
+            shutil.rmtree(d, ignore_errors=True)

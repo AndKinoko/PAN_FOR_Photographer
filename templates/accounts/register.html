@@ -5,128 +5,133 @@
 
 {% block extra_css %}
 <style>
-    .auth-wrapper {
-        min-height: calc(100vh - 48px);
+    .auth-page {
+        min-height: calc(100vh - var(--header-height));
         display: flex;
         align-items: center;
         justify-content: center;
-        padding: 2rem 0;
+        padding: var(--space-8) var(--space-4);
     }
     .auth-card {
-        max-width: 480px;
+        max-width: 460px;
         width: 100%;
-        animation: scaleIn 0.4s ease-out;
+        animation: scaleIn 0.4s cubic-bezier(0.4, 0, 0.2, 1);
     }
-    .auth-card .brand-icon {
+    .auth-card .card-body {
+        padding: var(--space-8);
+    }
+    .auth-brand {
         width: 64px;
         height: 64px;
-        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-        border-radius: 16px;
+        background: linear-gradient(135deg, var(--accent-400), var(--accent-600));
+        border-radius: var(--radius-lg);
         display: flex;
         align-items: center;
         justify-content: center;
         font-size: 1.75rem;
         color: #fff;
-        margin: 0 auto 1rem;
-        box-shadow: 0 8px 24px rgba(16, 185, 129, 0.25);
+        margin: 0 auto var(--space-5);
+        box-shadow: 0 8px 24px rgba(201, 151, 39, 0.3);
     }
-    .auth-card .auth-title {
+    .auth-heading {
         text-align: center;
-        margin-bottom: 1.5rem;
+        margin-bottom: var(--space-6);
     }
-    .auth-card .auth-title h4 {
+    .auth-heading h2 {
+        font-size: 1.4rem;
         font-weight: 700;
         color: var(--text-primary);
-        margin-bottom: 0.25rem;
+        margin-bottom: var(--space-2);
+        letter-spacing: -0.02em;
     }
-    .auth-card .auth-title p {
+    .auth-heading p {
         color: var(--text-secondary);
-        font-size: 0.9rem;
+        font-size: 0.85rem;
     }
     .auth-divider {
         display: flex;
         align-items: center;
-        margin: 1.5rem 0;
-        color: var(--text-muted);
-        font-size: 0.85rem;
+        margin: var(--space-5) 0;
+        color: var(--text-tertiary);
+        font-size: 0.8rem;
     }
     .auth-divider::before,
     .auth-divider::after {
         content: '';
         flex: 1;
         height: 1px;
-        background: rgba(99, 102, 241, 0.1);
+        background: var(--border-subtle);
     }
-    .auth-divider::before { margin-right: 1rem; }
-    .auth-divider::after { margin-left: 1rem; }
-    .field-error {
-        color: #dc2626;
-        font-size: 0.8rem;
-        margin-top: 0.3rem;
+    .auth-divider::before { margin-right: var(--space-3); }
+    .auth-divider::after { margin-left: var(--space-3); }
+    .password-hint-list {
+        margin: 0;
+        padding-left: var(--space-4);
+        color: var(--text-tertiary);
+        font-size: 0.75rem;
     }
-    .form-control-modern.is-invalid {
-        border-color: #dc2626;
-        background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12' width='12' height='12' fill='none' stroke='%23dc2626'%3e%3ccircle cx='6' cy='6' r='4.5'/%3e%3cpath stroke-linejoin='round' d='M5.8 3.6h.4L6 6.5z'/%3e%3ccircle cx='6' cy='8.2' r='.6' fill='%23dc2626' stroke='none'/%3e%3c/svg%3e");
-        background-repeat: no-repeat;
-        background-position: right 0.75rem center;
-        background-size: 1rem;
+    .password-hint-list li {
+        margin-bottom: 2px;
+        line-height: 1.5;
+    }
+    .password-hint-list li:last-child {
+        margin-bottom: 0;
     }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="auth-wrapper">
+<div class="auth-page">
     <div class="auth-card">
-        <div class="card-modern">
-            <div class="card-body p-4">
-                <div class="brand-icon">
+        <div class="card">
+            <div class="card-body">
+                <div class="auth-brand">
                     <i class="fas fa-user-plus"></i>
                 </div>
-                
-                <div class="auth-title">
-                    <h4>创建账号</h4>
+
+                <div class="auth-heading">
+                    <h2>创建账号</h2>
                     <p>注册一个新账号以使用网盘服务</p>
                 </div>
-                
-                <!-- Non-field errors (e.g. password mismatch) -->
+
                 {% if form.non_field_errors %}
-                <div class="alert alert-modern alert-danger animate-fade-in mb-3">
-                    <i class="fas fa-exclamation-circle me-2"></i>
-                    {{ form.non_field_errors|join:"， " }}
+                <div class="alert alert-danger mb-4 animate-fade-in">
+                    <i class="fas fa-circle-exclamation"></i>
+                    <span>{{ form.non_field_errors|join:"， " }}</span>
                 </div>
                 {% endif %}
-                
+
                 <form method="post" id="register-form">
                     {% csrf_token %}
-                    
-                    <div class="mb-3">
-                        <label for="id_username" class="form-label-modern">用户名</label>
-                        <input type="text" class="form-control form-control-modern{% if form.username.errors %} is-invalid{% endif %}" 
-                               id="id_username" name="username" 
+
+                    <div class="form-group">
+                        <label for="id_username" class="form-label">用户名</label>
+                        <input type="text" class="form-input{% if form.username.errors %} is-invalid{% endif %}"
+                               id="id_username" name="username"
                                required autofocus
                                value="{{ form.username.value|default:'' }}"
                                placeholder="请输入用户名">
                         {% if form.username.errors %}
                             {% for error in form.username.errors %}
-                            <div class="field-error"><i class="fas fa-exclamation-circle me-1"></i>{{ error }}</div>
+                            <div class="form-error"><i class="fas fa-circle-exclamation" style="margin-right: 4px;"></i>{{ error }}</div>
                             {% endfor %}
                         {% else %}
-                            <div class="form-text-modern">150个字符以内，只能包含字母、数字和 @/./+/-/_</div>
+                            <div class="form-hint">150个字符以内，只能包含字母、数字和 @/./+/-/_</div>
                         {% endif %}
                     </div>
-                    
-                    <div class="mb-3">
-                        <label for="id_password1" class="form-label-modern">密码</label>
-                        <input type="password" class="form-control form-control-modern{% if form.password1.errors %} is-invalid{% endif %}" 
-                               id="id_password1" name="password1" 
+
+                    <div class="form-group">
+                        <label for="id_password1" class="form-label">密码</label>
+                        <input type="password" class="form-input{% if form.password1.errors %} is-invalid{% endif %}"
+                               id="id_password1" name="password1"
                                required placeholder="请输入密码">
                         {% if form.password1.errors %}
                             {% for error in form.password1.errors %}
-                            <div class="field-error"><i class="fas fa-exclamation-circle me-1"></i>{{ error }}</div>
+                            <div class="form-error"><i class="fas fa-circle-exclamation" style="margin-right: 4px;"></i>{{ error }}</div>
                             {% endfor %}
                         {% else %}
-                            <div class="form-text-modern">
-                                <ul class="mb-0 ps-3 mt-1">
+                            <div class="form-hint">
+                                <ul class="password-hint-list">
                                     <li>不能与其他个人信息太相似</li>
                                     <li>至少包含 8 个字符</li>
                                     <li>不能是常见密码</li>
@@ -135,30 +140,30 @@
                             </div>
                         {% endif %}
                     </div>
-                    
-                    <div class="mb-4">
-                        <label for="id_password2" class="form-label-modern">确认密码</label>
-                        <input type="password" class="form-control form-control-modern{% if form.password2.errors %} is-invalid{% endif %}" 
-                               id="id_password2" name="password2" 
+
+                    <div class="form-group" style="margin-bottom: var(--space-5);">
+                        <label for="id_password2" class="form-label">确认密码</label>
+                        <input type="password" class="form-input{% if form.password2.errors %} is-invalid{% endif %}"
+                               id="id_password2" name="password2"
                                required placeholder="请再次输入密码">
                         {% if form.password2.errors %}
                             {% for error in form.password2.errors %}
-                            <div class="field-error"><i class="fas fa-exclamation-circle me-1"></i>{{ error }}</div>
+                            <div class="form-error"><i class="fas fa-circle-exclamation" style="margin-right: 4px;"></i>{{ error }}</div>
                             {% endfor %}
                         {% else %}
-                            <div class="form-text-modern">再次输入密码以确认</div>
+                            <div class="form-hint">再次输入密码以确认</div>
                         {% endif %}
                     </div>
-                    
-                    <button type="submit" class="btn btn-accent-modern btn-modern w-100 py-2">
-                        <i class="fas fa-user-plus me-2"></i>注册
+
+                    <button type="submit" class="btn btn-primary btn-block">
+                        <i class="fas fa-user-plus"></i>注册
                     </button>
                 </form>
-                
+
                 <div class="auth-divider">已有账号？</div>
-                
-                <a href="{% url 'accounts:login' %}" class="btn btn-outline-modern btn-modern w-100">
-                    <i class="fas fa-sign-in-alt me-2"></i>立即登录
+
+                <a href="{% url 'accounts:login' %}" class="btn btn-secondary btn-block">
+                    <i class="fas fa-right-to-bracket"></i>立即登录
                 </a>
             </div>
         </div>

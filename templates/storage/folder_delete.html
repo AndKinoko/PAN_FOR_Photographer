@@ -1,115 +1,117 @@
 {% extends 'base.html' %}
 
-{% block title %}删除文件夹 - 局域网网盘{% endblock %}
+{% block title %}删除文件夹 - 云盘{% endblock %}
 
 {% block breadcrumb %}
-<nav aria-label="breadcrumb">
-    <ol class="breadcrumb breadcrumb-modern">
-        <li class="breadcrumb-item">
-            <a href="{% url 'storage:file_list' %}">
-                <i class="fas fa-home"></i> 根目录
-            </a>
-        </li>
-        {% if folder.parent %}
-        <li class="breadcrumb-item">
-            <a href="{% url 'storage:file_list' folder_id=folder.parent.id %}">
-                {{ folder.parent.name }}
-            </a>
-        </li>
-        {% endif %}
-        <li class="breadcrumb-item active">删除文件夹</li>
-    </ol>
-</nav>
+<div class="breadcrumb">
+    <a href="{% url 'storage:file_list' %}">
+        <i class="fas fa-home"></i> 根目录
+    </a>
+    <span class="sep">/</span>
+    {% if folder.parent %}
+    <a href="{% url 'storage:file_list' folder_id=folder.parent.id %}">
+        {{ folder.parent.name }}
+    </a>
+    <span class="sep">/</span>
+    {% endif %}
+    <span class="current">删除文件夹</span>
+</div>
 {% endblock %}
 
 {% block content %}
-<div class="row justify-content-center animate-fade-in">
-    <div class="col-md-6">
-        <div class="card-modern mb-4">
-            <div class="card-header header-gradient" style="background: linear-gradient(135deg, #ef4444 0%, #dc2626 50%, #991b1b 100%);">
-                <h4 class="mb-0"><i class="fas fa-trash-alt me-2"></i>确认删除文件夹</h4>
+<div class="mx-auto animate-fade-in" style="max-width: 560px;">
+    <div class="card mb-4">
+        <div class="card-header" style="background: var(--danger-bg); border-bottom-color: rgba(214, 69, 69, 0.2);">
+            <div class="card-title" style="color: var(--danger);">
+                <i class="fas fa-trash-alt"></i>
+                确认删除文件夹
             </div>
-            <div class="card-body">
-                <div class="alert-modern alert-danger mb-4">
-                    <h5 class="alert-heading">
-                        <i class="fas fa-exclamation-triangle me-2"></i>
-                        严重警告：此操作将永久删除文件夹及其所有内容！
-                    </h5>
-                    <p class="mb-0">删除文件夹将同时删除文件夹内的所有文件和子文件夹，此操作不可撤销！</p>
+        </div>
+        <div class="card-body">
+            <div class="alert alert-danger mb-4">
+                <i class="fas fa-exclamation-triangle"></i>
+                <div>
+                    <strong style="display: block; margin-bottom: 4px;">严重警告：此操作将永久删除文件夹及其所有内容！</strong>
+                    <span>删除文件夹将同时删除文件夹内的所有文件和子文件夹，此操作不可撤销！</span>
                 </div>
-                
-                <div class="card-modern mb-4" style="transform: none; box-shadow: 0 2px 12px rgba(99, 102, 241, 0.06);">
-                    <div class="card-body">
-                        <div class="d-flex align-items-center">
-                            <div class="file-icon-wrapper me-3" style="width: 52px; height: 52px; background: rgba(245, 158, 11, 0.1);">
-                                <i class="fas fa-folder fa-2x" style="color:#f59e0b;"></i>
+            </div>
+
+            <div class="card mb-4" style="box-shadow: none;">
+                <div class="card-body">
+                    <div class="flex items-center gap-3">
+                        <div class="file-icon folder lg">
+                            <i class="fas fa-folder"></i>
+                        </div>
+                        <div style="flex: 1; min-width: 0;">
+                            <div class="font-semibold mb-2">{{ folder.name }}</div>
+                            <div class="text-sm text-muted mb-1">
+                                <i class="fas fa-folder-tree" style="opacity: 0.6; margin-right: 4px;"></i>路径: {{ folder.path }}
                             </div>
-                            <div>
-                                <h5 class="mb-2">{{ folder.name }}</h5>
-                                <div class="mb-1" style="color: var(--text-secondary, #64748b); font-size: 0.85rem;">
-                                    <i class="fas fa-folder-tree me-1" style="opacity:0.6;"></i> 路径: {{ folder.path }}
-                                </div>
-                                <div class="mb-1" style="color: var(--text-secondary, #64748b); font-size: 0.85rem;">
-                                    <i class="fas fa-calendar-plus me-1" style="opacity:0.6;"></i> 创建时间: {{ folder.created_at|date:"Y-m-d H:i" }}
-                                </div>
-                                <div style="color: var(--text-secondary, #64748b); font-size: 0.85rem;">
-                                    <i class="fas fa-calendar-check me-1" style="opacity:0.6;"></i> 最后修改: {{ folder.updated_at|date:"Y-m-d H:i" }}
-                                </div>
+                            <div class="text-sm text-muted mb-1">
+                                <i class="fas fa-calendar-plus" style="opacity: 0.6; margin-right: 4px;"></i>创建时间: {{ folder.created_at|date:"Y-m-d H:i" }}
+                            </div>
+                            <div class="text-sm text-muted">
+                                <i class="fas fa-calendar-check" style="opacity: 0.6; margin-right: 4px;"></i>最后修改: {{ folder.updated_at|date:"Y-m-d H:i" }}
                             </div>
                         </div>
-                        
-                        {% with file_count=folder.files.count folder_count=folder.subfolders.count %}
-                        <div class="mt-3">
-                            <div class="alert-modern alert-warning">
-                                <i class="fas fa-folder-open me-2"></i>
-                                文件夹包含：
-                                <div class="mt-2">
-                                    <span class="badge bg-danger bg-opacity-10 text-danger me-2 px-3 py-2">
-                                        <i class="fas fa-file me-1"></i>{{ file_count }} 个文件
-                                    </span>
-                                    <span class="badge bg-warning bg-opacity-10 text-warning px-3 py-2">
-                                        <i class="fas fa-folder me-1"></i>{{ folder_count }} 个子文件夹
-                                    </span>
-                                </div>
-                            </div>
-                        </div>
-                        {% endwith %}
                     </div>
+
+                    {% with file_count=folder.files.count folder_count=folder.subfolders.count %}
+                    <div class="mt-4">
+                        <div class="alert alert-warning">
+                            <i class="fas fa-folder-open"></i>
+                            <div>
+                                <span style="display: block; margin-bottom: 8px;">文件夹包含：</span>
+                                <div class="flex gap-2" style="flex-wrap: wrap;">
+                                    <span class="badge badge-danger">
+                                        <i class="fas fa-file"></i>{{ file_count }} 个文件
+                                    </span>
+                                    <span class="badge badge-warning">
+                                        <i class="fas fa-folder"></i>{{ folder_count }} 个子文件夹
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endwith %}
                 </div>
-                
-                <div class="alert-modern alert-info mb-4">
-                    <h6 class="mb-2"><i class="fas fa-lightbulb me-2"></i>删除前请确认：</h6>
-                    <ul class="mb-0 list-unstyled">
-                        <li class="mb-1"><i class="fas fa-question-circle me-2" style="color:var(--primary-light, #a78bfa); font-size:0.8rem;"></i>是否已备份重要文件？</li>
-                        <li class="mb-1"><i class="fas fa-question-circle me-2" style="color:var(--primary-light, #a78bfa); font-size:0.8rem;"></i>是否确认不再需要此文件夹及其内容？</li>
-                        <li><i class="fas fa-question-circle me-2" style="color:var(--primary-light, #a78bfa); font-size:0.8rem;"></i>是否已通知相关用户（如果有分享）？</li>
+            </div>
+
+            <div class="alert alert-info mb-4">
+                <i class="fas fa-lightbulb"></i>
+                <div>
+                    <strong style="display: block; margin-bottom: 6px;">删除前请确认：</strong>
+                    <ul style="list-style: none; padding: 0; margin: 0;">
+                        <li class="mb-1"><i class="fas fa-question-circle" style="color: var(--accent); font-size: 0.75rem; margin-right: 6px;"></i>是否已备份重要文件？</li>
+                        <li class="mb-1"><i class="fas fa-question-circle" style="color: var(--accent); font-size: 0.75rem; margin-right: 6px;"></i>是否确认不再需要此文件夹及其内容？</li>
+                        <li><i class="fas fa-question-circle" style="color: var(--accent); font-size: 0.75rem; margin-right: 6px;"></i>是否已通知相关用户（如果有分享）？</li>
                     </ul>
                 </div>
-                
-                <form method="post" id="deleteForm">
-                    {% csrf_token %}
-                    
-                    <div class="mb-4">
-                        <div class="form-check">
-                            <input class="form-check-input" type="checkbox" id="confirmDelete" required>
-                            <label class="form-check-label fw-bold" for="confirmDelete" style="color: var(--primary-dark, #4f46e5);">
-                                <i class="fas fa-check-circle me-1"></i>
-                                我理解此操作将永久删除文件夹及其所有内容，且不可撤销
-                            </label>
-                        </div>
-                    </div>
-                    
-                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
-                        <a href="{% url 'storage:file_list' %}{% if folder.parent %}folder/{{ folder.parent.id }}/{% endif %}" 
-                           class="btn btn-modern btn-outline-modern me-md-2">
-                            <i class="fas fa-times me-1"></i>取消
-                        </a>
-                        <button type="submit" class="btn btn-modern btn-danger-modern" id="deleteButton" disabled>
-                            <i class="fas fa-trash-alt me-1"></i>确认删除文件夹
-                        </button>
-                    </div>
-                </form>
             </div>
+
+            <form method="post" id="deleteForm">
+                {% csrf_token %}
+
+                <div class="mb-4">
+                    <label style="display: flex; align-items: flex-start; gap: 10px; cursor: pointer; font-weight: 500; color: var(--text-primary);">
+                        <input type="checkbox" id="confirmDelete" required style="margin-top: 3px; accent-color: var(--accent);">
+                        <span>
+                            <i class="fas fa-check-circle" style="color: var(--accent); margin-right: 4px;"></i>
+                            我理解此操作将永久删除文件夹及其所有内容，且不可撤销
+                        </span>
+                    </label>
+                </div>
+
+                <div class="flex gap-2 justify-between">
+                    <a href="{% url 'storage:file_list' %}{% if folder.parent %}folder/{{ folder.parent.id }}/{% endif %}"
+                       class="btn btn-secondary">
+                        <i class="fas fa-times"></i>取消
+                    </a>
+                    <button type="submit" class="btn btn-danger" id="deleteButton" disabled>
+                        <i class="fas fa-trash-alt"></i>确认删除文件夹
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
 </div>
@@ -121,7 +123,7 @@
     document.getElementById('confirmDelete').addEventListener('change', function() {
         document.getElementById('deleteButton').disabled = !this.checked;
     });
-    
+
     // 表单提交确认
     document.getElementById('deleteForm').addEventListener('submit', function(e) {
         if (!document.getElementById('confirmDelete').checked) {
@@ -129,7 +131,7 @@
             alert('请先确认理解删除操作的后果');
             return false;
         }
-        
+
         const confirmed = confirm('最后确认：您确定要永久删除文件夹 "{{ folder.name }}" 及其所有内容吗？\n\n此操作不可撤销！');
         if (!confirmed) {
             e.preventDefault();

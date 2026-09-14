@@ -17,4 +17,13 @@ urlpatterns = [
     path('folder/create/', views.folder_create, name='folder_create'),
     path('folder/create/<int:parent_id>/', views.folder_create, name='folder_create'),
     path('folder/delete/<int:folder_id>/', views.folder_delete, name='folder_delete'),
+
+    # Transfer center
+    path('transfer/', views.transfer, name='transfer'),
+    path('api/quota/', views.api_quota, name='api_quota'),
+    path('api/filemeta/', views.api_filemeta, name='api_filemeta'),
+    path('api/upload/init/', views.api_upload_init, name='api_upload_init'),
+    path('api/upload/chunk/', views.api_upload_chunk, name='api_upload_chunk'),
+    path('api/upload/complete/', views.api_upload_complete, name='api_upload_complete'),
+    path('api/upload/cancel/', views.api_upload_cancel, name='api_upload_cancel'),
 ]

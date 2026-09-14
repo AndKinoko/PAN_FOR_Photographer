@@ -1,106 +1,105 @@
 {% extends 'base.html' %}
 
-{% block title %}删除文件 - 局域网网盘{% endblock %}
+{% block title %}删除文件 - 云盘{% endblock %}
 
 {% block breadcrumb %}
-<nav aria-label="breadcrumb">
-    <ol class="breadcrumb breadcrumb-modern">
-        <li class="breadcrumb-item">
-            <a href="{% url 'storage:file_list' %}">
-                <i class="fas fa-home"></i> 根目录
-            </a>
-        </li>
-        {% if file.folder %}
-        <li class="breadcrumb-item">
-            <a href="{% url 'storage:file_list' folder_id=file.folder.id %}">
-                {{ file.folder.name }}
-            </a>
-        </li>
-        {% endif %}
-        <li class="breadcrumb-item active">删除文件</li>
-    </ol>
-</nav>
+<div class="breadcrumb">
+    <a href="{% url 'storage:file_list' %}">
+        <i class="fas fa-home"></i> 根目录
+    </a>
+    <span class="sep">/</span>
+    {% if file.folder %}
+    <a href="{% url 'storage:file_list' folder_id=file.folder.id %}">
+        {{ file.folder.name }}
+    </a>
+    <span class="sep">/</span>
+    {% endif %}
+    <span class="current">删除文件</span>
+</div>
 {% endblock %}
 
 {% block content %}
-<div class="row justify-content-center animate-fade-in">
-    <div class="col-md-6">
-        <div class="card-modern mb-4">
-            <div class="card-header header-gradient" style="background: linear-gradient(135deg, #ef4444 0%, #dc2626 50%, #b91c1c 100%);">
-                <h4 class="mb-0"><i class="fas fa-trash-alt me-2"></i>确认删除文件</h4>
+<div class="mx-auto animate-fade-in" style="max-width: 560px;">
+    <div class="card mb-4">
+        <div class="card-header" style="background: var(--danger-bg); border-bottom-color: rgba(214, 69, 69, 0.2);">
+            <div class="card-title" style="color: var(--danger);">
+                <i class="fas fa-trash-alt"></i>
+                确认删除文件
             </div>
-            <div class="card-body">
-                <div class="alert-modern alert-warning mb-4">
-                    <h5 class="alert-heading">
-                        <i class="fas fa-exclamation-triangle me-2"></i>
-                        警告：此操作不可撤销！
-                    </h5>
-                    <p class="mb-0">您确定要删除以下文件吗？文件删除后将无法恢复。</p>
+        </div>
+        <div class="card-body">
+            <div class="alert alert-warning mb-4">
+                <i class="fas fa-exclamation-triangle"></i>
+                <div>
+                    <strong style="display: block; margin-bottom: 4px;">警告：此操作不可撤销！</strong>
+                    <span>您确定要删除以下文件吗？文件删除后将无法恢复。</span>
                 </div>
-                
-                <div class="card-modern mb-4" style="transform: none; box-shadow: 0 2px 12px rgba(99, 102, 241, 0.06);">
-                    <div class="card-body">
-                        <div class="d-flex align-items-center">
-                            <div class="file-icon-wrapper me-3">
-                                {% if file.file_type == 'pdf' %}
-                                <i class="fas fa-file-pdf fa-2x" style="color:#ef4444;"></i>
-                                {% elif file.file_type in 'jpg,jpeg,png,gif,bmp' %}
-                                <i class="fas fa-file-image fa-2x" style="color:#10b981;"></i>
-                                {% elif file.file_type in 'doc,docx' %}
-                                <i class="fas fa-file-word fa-2x" style="color:#3b82f6;"></i>
-                                {% elif file.file_type in 'xls,xlsx' %}
-                                <i class="fas fa-file-excel fa-2x" style="color:#10b981;"></i>
-                                {% elif file.file_type in 'zip,rar,7z' %}
-                                <i class="fas fa-file-archive fa-2x" style="color:#f59e0b;"></i>
-                                {% else %}
-                                <i class="fas fa-file fa-2x" style="color:#64748b;"></i>
-                                {% endif %}
+            </div>
+
+            <div class="card mb-4" style="box-shadow: none;">
+                <div class="card-body">
+                    <div class="flex items-center gap-3">
+                        <div class="file-icon {% if file.file_type == 'pdf' %}pdf{% elif file.file_type in 'jpg,jpeg,png,gif,bmp' %}image{% elif file.file_type in 'doc,docx' %}document{% elif file.file_type in 'xls,xlsx' %}spreadsheet{% elif file.file_type in 'zip,rar,7z' %}archive{% else %}default{% endif %} lg">
+                            {% if file.file_type == 'pdf' %}
+                            <i class="fas fa-file-pdf"></i>
+                            {% elif file.file_type in 'jpg,jpeg,png,gif,bmp' %}
+                            <i class="fas fa-file-image"></i>
+                            {% elif file.file_type in 'doc,docx' %}
+                            <i class="fas fa-file-word"></i>
+                            {% elif file.file_type in 'xls,xlsx' %}
+                            <i class="fas fa-file-excel"></i>
+                            {% elif file.file_type in 'zip,rar,7z' %}
+                            <i class="fas fa-file-archive"></i>
+                            {% else %}
+                            <i class="fas fa-file"></i>
+                            {% endif %}
+                        </div>
+                        <div style="flex: 1; min-width: 0;">
+                            <div class="font-semibold mb-2">{{ file.name }}</div>
+                            <div class="text-sm text-muted mb-1">
+                                <i class="fas fa-tag" style="opacity: 0.6; margin-right: 4px;"></i>原名: {{ file.original_name }}
                             </div>
-                            <div>
-                                <h5 class="mb-2">{{ file.name }}</h5>
-                                <div class="mb-1" style="color: var(--text-secondary, #64748b); font-size: 0.85rem;">
-                                    <i class="fas fa-tag me-1" style="opacity:0.6;"></i> 原名: {{ file.original_name }}
-                                </div>
-                                <div class="mb-1" style="color: var(--text-secondary, #64748b); font-size: 0.85rem;">
-                                    <i class="fas fa-file-code me-1" style="opacity:0.6;"></i> 类型: {{ file.file_type|upper }}
-                                </div>
-                                <div class="mb-1" style="color: var(--text-secondary, #64748b); font-size: 0.85rem;">
-                                    <i class="fas fa-database me-1" style="opacity:0.6;"></i> 大小: {{ file.formatted_size }}
-                                </div>
-                                <div style="color: var(--text-secondary, #64748b); font-size: 0.85rem;">
-                                    <i class="fas fa-calendar me-1" style="opacity:0.6;"></i> 上传时间: {{ file.uploaded_at|date:"Y-m-d H:i" }}
-                                </div>
+                            <div class="text-sm text-muted mb-1">
+                                <i class="fas fa-file-code" style="opacity: 0.6; margin-right: 4px;"></i>类型: {{ file.file_type|upper }}
+                            </div>
+                            <div class="text-sm text-muted mb-1">
+                                <i class="fas fa-database" style="opacity: 0.6; margin-right: 4px;"></i>大小: {{ file.formatted_size }}
+                            </div>
+                            <div class="text-sm text-muted">
+                                <i class="fas fa-calendar" style="opacity: 0.6; margin-right: 4px;"></i>上传时间: {{ file.uploaded_at|date:"Y-m-d H:i" }}
                             </div>
                         </div>
                     </div>
                 </div>
-                
-                <form method="post">
-                    {% csrf_token %}
-                    
-                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
-                        <a href="{% url 'storage:file_list' %}{% if file.folder %}folder/{{ file.folder.id }}/{% endif %}" 
-                           class="btn btn-modern btn-outline-modern me-md-2">
-                            <i class="fas fa-times me-1"></i>取消
-                        </a>
-                        <button type="submit" class="btn btn-modern btn-danger-modern">
-                            <i class="fas fa-trash-alt me-1"></i>确认删除
-                        </button>
-                    </div>
-                </form>
             </div>
+
+            <form method="post">
+                {% csrf_token %}
+
+                <div class="flex gap-2 justify-between">
+                    <a href="{% url 'storage:file_list' %}{% if file.folder %}folder/{{ file.folder.id }}/{% endif %}"
+                       class="btn btn-secondary">
+                        <i class="fas fa-times"></i>取消
+                    </a>
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fas fa-trash-alt"></i>确认删除
+                    </button>
+                </div>
+            </form>
         </div>
-        
-        <div class="card-modern">
-            <div class="card-body">
-                <h6 class="mb-3"><i class="fas fa-info-circle text-primary me-2"></i>删除说明</h6>
-                <ul class="mb-0 list-unstyled">
-                    <li class="mb-2"><i class="fas fa-times-circle text-danger me-2" style="font-size:0.8rem;"></i>文件将从服务器永久删除</li>
-                    <li class="mb-2"><i class="fas fa-times-circle text-danger me-2" style="font-size:0.8rem;"></i>删除操作不可撤销</li>
-                    <li class="mb-2"><i class="fas fa-exclamation-circle text-warning me-2" style="font-size:0.8rem;"></i>如果文件已被分享，分享链接将失效</li>
-                    <li><i class="fas fa-check-circle text-success me-2" style="font-size:0.8rem;"></i>建议在删除前确认文件不再需要</li>
-                </ul>
+    </div>
+
+    <div class="card">
+        <div class="card-body">
+            <div class="card-title mb-3">
+                <i class="fas fa-info-circle"></i>删除说明
             </div>
+            <ul style="list-style: none; padding: 0; margin: 0;">
+                <li class="mb-2"><i class="fas fa-times-circle" style="color: var(--danger); margin-right: 8px; font-size: 0.8rem;"></i>文件将从服务器永久删除</li>
+                <li class="mb-2"><i class="fas fa-times-circle" style="color: var(--danger); margin-right: 8px; font-size: 0.8rem;"></i>删除操作不可撤销</li>
+                <li class="mb-2"><i class="fas fa-exclamation-circle" style="color: var(--warning); margin-right: 8px; font-size: 0.8rem;"></i>如果文件已被分享，分享链接将失效</li>
+                <li><i class="fas fa-check-circle" style="color: var(--success); margin-right: 8px; font-size: 0.8rem;"></i>建议在删除前确认文件不再需要</li>
+            </ul>
         </div>
     </div>
 </div>

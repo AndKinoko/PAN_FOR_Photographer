@@ -162,9 +162,18 @@ MESSAGE_TAGS = {
     message_constants.ERROR: 'danger',
 }
 
-# File upload settings (no restrictions as requested)
-FILE_UPLOAD_MAX_MEMORY_SIZE = 2147483648  # 2GB - effectively unlimited
-DATA_UPLOAD_MAX_MEMORY_SIZE = 2147483648  # 2GB - effectively unlimited
+# File upload settings
+# 内存上限控制：超过 2MB 的上传分片直接落临时文件，不驻内存；
+# 表单字段总量上限 16MB（文件字节走上传处理器，不计入此项）。
+# 配合分片上传（默认 5MB/片、单任务串行），服务内存占用远低于 8GB。
+FILE_UPLOAD_MAX_MEMORY_SIZE = 2 * 1024 * 1024  # 2MB
+DATA_UPLOAD_MAX_MEMORY_SIZE = 16 * 1024 * 1024  # 16MB
+
+# 传输中心配置
+TRANSFER_CHUNK_SIZE = 5 * 1024 * 1024  # 分片大小 5MB
+TRANSFER_MAX_FILE_SIZE = 10737418240  # 单文件上限 10GB
+TRANSFER_STALE_HOURS = 24  # 未完成会话保留时长
+TRANSFER_BLOB_CAP = 512 * 1024 * 1024  # 浏览器内存下载上限，超限走流式/原生
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field

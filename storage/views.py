@@ -1,16 +1,87 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
-from django.http import FileResponse, Http404, HttpResponseForbidden
+from django.http import FileResponse, Http404, HttpResponseForbidden, StreamingHttpResponse, JsonResponse
 from django.db.models import Q
+from django.conf import settings
+from django.utils import timezone
 import os
+import re
+import json
+import shutil
 import logging
+import threading
+from uuid import uuid4
+from datetime import timedelta
 
 from accounts.models import UserProfile, format_bytes
-from .models import File, Folder
+from .models import File, Folder, UploadSession
 from .forms import FileUploadForm, FolderCreateForm
 
 logger = logging.getLogger(__name__)
+
+# 与旧表单上传保持一致的安全限制
+BLOCKED_EXTS = {'.html', '.htm', '.svg', '.js', '.mjs'}
+CHUNK_SIZE = getattr(settings, 'TRANSFER_CHUNK_SIZE', 5 * 1024 * 1024)
+MAX_FILE_SIZE = getattr(settings, 'TRANSFER_MAX_FILE_SIZE', 10737418240)
+# complete 临界区按用户串行：配额检查+建档原子化，并发完成不超额
+_complete_guard = threading.Lock()
+_complete_locks = {}
+
+
+def _user_lock(user_id):
+    with _complete_guard:
+        lock = _complete_locks.get(user_id)
+        if lock is None:
+            lock = threading.Lock()
+            _complete_locks[user_id] = lock
+        return lock
+
+
+def range_file_response(request, abs_path, filename, content_type=None, inline=False):
+    """支持 Range 断点续传的文件响应；切片按 1MB 流式读，内存恒定。"""
+    size = os.path.getsize(abs_path)
+    start, end = 0, size - 1
+    status = 200
+    range_header = (request.META.get('HTTP_RANGE') or '').strip()
+    m = re.match(r'bytes=(\d*)-(\d*)$', range_header)
+    if m:
+        s, e = m.groups()
+        if s == '' and e != '':
+            start = max(0, size - int(e))
+        else:
+            start = int(s) if s else 0
+            end = int(e) if e and int(e) < size else size - 1
+        if start >= size or start > end:
+            resp = StreamingHttpResponse(status=416)
+            resp['Content-Range'] = f'bytes */{size}'
+            resp['Accept-Ranges'] = 'bytes'
+            return resp
+        status = 206
+
+    length = end - start + 1
+
+    def slicer(path=abs_path, offset=start, remaining=length):
+        with open(path, 'rb') as f:
+            f.seek(offset)
+            while remaining > 0:
+                data = f.read(min(1024 * 1024, remaining))
+                if not data:
+                    break
+                remaining -= len(data)
+                yield data
+
+    if status == 206:
+        resp = StreamingHttpResponse(slicer(), status=206,
+                                     content_type=content_type or 'application/octet-stream')
+        resp['Content-Range'] = f'bytes {start}-{end}/{size}'
+    else:
+        resp = FileResponse(open(abs_path, 'rb'), content_type=content_type)
+    resp['Content-Length'] = str(length)
+    resp['Accept-Ranges'] = 'bytes'
+    disp = 'inline' if inline else 'attachment'
+    resp['Content-Disposition'] = f'{disp}; filename="{filename}"'
+    return resp
 
 
 def get_profile(user):
@@ -56,9 +127,16 @@ def file_list(request, folder_id=None):
 
 @login_required
 def file_upload(request, folder_id=None):
-    """Handle file upload"""
+    """旧上传页：GET 跳转新版文件传输页，POST 保留兼容处理"""
     if is_frozen(request.user):
         return frozen_response(request)
+
+    if request.method == 'GET':
+        from django.urls import reverse
+        base = reverse('storage:transfer')
+        if folder_id:
+            return redirect(f'{base}?folder={folder_id}')
+        return redirect(base)
 
     folder = None
     if folder_id:
@@ -199,11 +277,9 @@ def file_download(request, file_id):
     if is_frozen(request.user):
         return HttpResponseForbidden('账号已冻结，无法下载（仍可登录预览），请联系管理员')
     file = get_object_or_404(File, id=file_id, owner=request.user)
-    
+
     if os.path.exists(file.file.path):
-        response = FileResponse(file.file.open('rb'))
-        response['Content-Disposition'] = f'attachment; filename="{file.original_name}"'
-        return response
+        return range_file_response(request, file.file.path, file.original_name)
     else:
         raise Http404("文件不存在")
 
@@ -223,25 +299,16 @@ def serve_media(request, file_id):
         return HttpResponseForbidden('账号已冻结，无法下载（仍可登录预览），请联系管理员')
     
     if is_preview and file.preview and os.path.exists(file.preview.path):
-        # 返回预览图
+        # 返回预览图（小 JPEG，保持原逻辑）
         response = FileResponse(file.preview.open('rb'))
-        content_type = 'image/jpeg'
+        response['Content-Type'] = 'image/jpeg'
+        return response
     elif is_preview:
         # 请求预览但预览不存在（如 RAW 预览生成失败）
         raise Http404("预览文件不存在")
     else:
-        # 返回原始文件（内联展示）
-        response = FileResponse(file.file.open('rb'))
-        content_type = None  # 让 Django 自动检测
-    
-    if content_type:
-        response['Content-Type'] = content_type
-    
-    # 对内联内容不设置 Content-Disposition，允许浏览器直接展示
-    if not is_preview:
-        response['Content-Disposition'] = f'inline; filename="{file.original_name}"'
-    
-    return response
+        # 返回原始文件（内联展示，支持 Range 续传）
+        return range_file_response(request, file.file.path, file.original_name, inline=True)
 
 @login_required
 def file_delete(request, file_id):
@@ -320,3 +387,246 @@ def folder_delete(request, folder_id):
     
     context = {'folder': folder}
     return render(request, 'storage/folder_delete.html', context)
+
+
+# ================= 文件传输中心 =================
+
+@login_required
+def transfer(request):
+    """文件传输中心：分片上传队列 + Range 下载任务"""
+    folder = None
+    folder_id = request.GET.get('folder')
+    if folder_id:
+        try:
+            folder = Folder.objects.get(id=int(folder_id), owner=request.user)
+        except (Folder.DoesNotExist, ValueError):
+            folder = None
+
+    folders = sorted(
+        Folder.objects.filter(owner=request.user),
+        key=lambda f: f.path.lower(),
+    )
+    profile = get_profile(request.user)
+    usage = profile.usage_bytes()
+    context = {
+        'current_folder': folder,
+        'folders': folders,
+        'quota_usage': usage,
+        'quota_usage_display': format_bytes(usage),
+        'quota_display': format_bytes(profile.quota_bytes),
+        'chunk_size': CHUNK_SIZE,
+        'max_file_size': MAX_FILE_SIZE,
+        'auto_download_id': request.GET.get('download', ''),
+    }
+    return render(request, 'storage/transfer.html', context)
+
+
+@login_required
+def api_filemeta(request):
+    """下载任务元信息：自己的文件才返回，供 ?download=ID 自动加入任务。"""
+    try:
+        file_id = int(request.GET.get('id', ''))
+    except (TypeError, ValueError):
+        return JsonResponse({'error': 'id 非法'}, status=400)
+    try:
+        f = File.objects.get(id=file_id, owner=request.user)
+    except File.DoesNotExist:
+        return JsonResponse({'error': '文件不存在或无权访问'}, status=404)
+    return JsonResponse({'id': f.id, 'name': f.name, 'size': f.size})
+
+
+@login_required
+def api_quota(request):
+    profile = get_profile(request.user)
+    usage = profile.usage_bytes()
+    return JsonResponse({
+        'usage': usage,
+        'usage_display': format_bytes(usage),
+        'quota': profile.quota_bytes,
+        'quota_display': format_bytes(profile.quota_bytes),
+    })
+
+
+def _purge_stale_sessions():
+    """清理超过保留时长的未完成会话（含落盘分片），防磁盘膨胀。"""
+    stale_hours = getattr(settings, 'TRANSFER_STALE_HOURS', 24)
+    cutoff = timezone.now() - timedelta(hours=stale_hours)
+    for s in UploadSession.objects.filter(status=UploadSession.STATUS_UPLOADING,
+                                          updated_at__lt=cutoff):
+        s.cleanup()
+        s.status = UploadSession.STATUS_CANCELLED
+        s.save(update_fields=['status'])
+
+
+def _check_uploadable(user, filename, total_size, folder):
+    """分片上传通用校验，返回 (ok, error_msg, status_code)。"""
+    if not filename:
+        return False, '缺少文件名', 400
+    if total_size <= 0:
+        return False, '文件大小异常', 400
+    if total_size > MAX_FILE_SIZE:
+        return False, f'文件超过单文件上限 {format_bytes(MAX_FILE_SIZE)}', 413
+    ext = os.path.splitext(filename)[1].lower()
+    if ext in BLOCKED_EXTS:
+        return False, f'文件类型 "{ext}" 不允许上传（存在安全风险）', 400
+    if File.objects.filter(owner=user, folder=folder,
+                           original_name__iexact=filename).exists():
+        return False, f'“{filename}”与目标文件夹中的文件重名', 409
+    profile = get_profile(user)
+    if profile.quota_bytes and profile.usage_bytes() + total_size > profile.quota_bytes:
+        return False, (f'容量不足：已用 {format_bytes(profile.usage_bytes())} / '
+                       f'配额 {format_bytes(profile.quota_bytes)}'), 413
+    return True, '', 200
+
+
+@login_required
+def api_upload_init(request):
+    if request.method != 'POST':
+        return JsonResponse({'error': 'method not allowed'}, status=405)
+    if is_frozen(request.user):
+        return JsonResponse({'error': '账号已冻结，仅可登录预览'}, status=403)
+    try:
+        data = json.loads(request.body or '{}')
+    except json.JSONDecodeError:
+        return JsonResponse({'error': '请求体不是合法 JSON'}, status=400)
+
+    filename = (data.get('filename') or '').strip()
+    try:
+        total_size = int(data.get('total_size') or 0)
+    except (TypeError, ValueError):
+        return JsonResponse({'error': 'total_size 非法'}, status=400)
+    folder = None
+    if data.get('folder_id'):
+        try:
+            folder = Folder.objects.get(id=int(data['folder_id']), owner=request.user)
+        except (Folder.DoesNotExist, ValueError):
+            return JsonResponse({'error': '目标文件夹不存在'}, status=404)
+
+    ok, err, code = _check_uploadable(request.user, filename, total_size, folder)
+    if not ok:
+        return JsonResponse({'error': err}, status=code)
+
+    _purge_stale_sessions()
+
+    # 断点续传：同用户同目录同名同大小的未完成会话直接复用
+    session = (UploadSession.objects
+               .filter(owner=request.user, folder=folder, original_name=filename,
+                       total_size=total_size, status=UploadSession.STATUS_UPLOADING)
+               .order_by('-updated_at').first())
+    if session is None:
+        total_chunks = (total_size + CHUNK_SIZE - 1) // CHUNK_SIZE
+        session = UploadSession.objects.create(
+            session_id=uuid4().hex,
+            owner=request.user, folder=folder,
+            original_name=filename, total_size=total_size,
+            chunk_size=CHUNK_SIZE, total_chunks=total_chunks,
+        )
+    else:
+        session.save(update_fields=['updated_at'])
+
+    return JsonResponse({
+        'session_id': session.session_id,
+        'chunk_size': session.chunk_size,
+        'total_chunks': session.total_chunks,
+        'received': session.received_indices(),
+    })
+
+
+@login_required
+def api_upload_chunk(request):
+    if request.method != 'POST':
+        return JsonResponse({'error': 'method not allowed'}, status=405)
+    if is_frozen(request.user):
+        return JsonResponse({'error': '账号已冻结，仅可登录预览'}, status=403)
+    session = get_object_or_404(UploadSession, session_id=request.POST.get('session_id'),
+                                owner=request.user,
+                                status=UploadSession.STATUS_UPLOADING)
+    try:
+        index = int(request.POST.get('index'))
+    except (TypeError, ValueError):
+        return JsonResponse({'error': 'index 非法'}, status=400)
+    if not 0 <= index < session.total_chunks:
+        return JsonResponse({'error': 'index 越界'}, status=400)
+    uploaded = request.FILES.get('chunk')
+    if uploaded is None:
+        return JsonResponse({'error': '缺少分片数据'}, status=400)
+    if uploaded.size > session.chunk_size + 1024 * 1024:
+        return JsonResponse({'error': '分片过大'}, status=400)
+
+    os.makedirs(session.temp_dir(), exist_ok=True)
+    # 流式落盘，内存占用≈单次 read 块（默认 256KB）
+    with open(session.chunk_path(index), 'wb') as out:
+        for piece in uploaded.chunks():
+            out.write(piece)
+    session.save(update_fields=['updated_at'])
+    return JsonResponse({'received': session.received_indices(),
+                         'done': session.is_complete()})
+
+
+@login_required
+def api_upload_complete(request):
+    if request.method != 'POST':
+        return JsonResponse({'error': 'method not allowed'}, status=405)
+    if is_frozen(request.user):
+        return JsonResponse({'error': '账号已冻结，仅可登录预览'}, status=403)
+    try:
+        data = json.loads(request.body or '{}')
+    except json.JSONDecodeError:
+        return JsonResponse({'error': '请求体不是合法 JSON'}, status=400)
+    session = get_object_or_404(UploadSession, session_id=data.get('session_id'),
+                                owner=request.user,
+                                status=UploadSession.STATUS_UPLOADING)
+
+    # 临界区按用户串行：并发完成时配额检查+建档原子化
+    with _user_lock(request.user.id):
+        if not session.is_complete():
+            missing = session.total_chunks - len(session.received_indices())
+            return JsonResponse({'error': f'分片不完整，还缺 {missing} 片'}, status=400)
+        ok, err, code = _check_uploadable(request.user, session.original_name,
+                                          session.total_size, session.folder)
+        if not ok:
+            return JsonResponse({'error': err}, status=code)
+
+        ext = os.path.splitext(session.original_name)[1].lower()
+        rel_path = f'user_{request.user.id}/{uuid4().hex}{ext}'
+        abs_path = os.path.join(settings.MEDIA_ROOT, rel_path)
+        os.makedirs(os.path.dirname(abs_path), exist_ok=True)
+        # 流式合并（1MB 缓冲），不整文件进内存
+        with open(abs_path, 'wb') as out:
+            for i in range(session.total_chunks):
+                with open(session.chunk_path(i), 'rb') as part:
+                    shutil.copyfileobj(part, out, 1024 * 1024)
+        if os.path.getsize(abs_path) != session.total_size:
+            os.unlink(abs_path)
+            return JsonResponse({'error': '合并后大小校验失败，请重试'}, status=500)
+
+        file_instance = File(
+            owner=request.user, folder=session.folder,
+            file=rel_path, original_name=session.original_name,
+            name=session.original_name, size=session.total_size,
+        )
+        file_instance.save()  # 预览生成在内部串行锁中执行
+        session.status = UploadSession.STATUS_DONE
+        session.save(update_fields=['status'])
+        session.cleanup()
+
+    return JsonResponse({'file_id': file_instance.id, 'name': file_instance.name,
+                         'size': file_instance.size,
+                         'size_display': file_instance.formatted_size})
+
+
+@login_required
+def api_upload_cancel(request):
+    if request.method != 'POST':
+        return JsonResponse({'error': 'method not allowed'}, status=405)
+    try:
+        data = json.loads(request.body or '{}')
+    except json.JSONDecodeError:
+        return JsonResponse({'error': '请求体不是合法 JSON'}, status=400)
+    session = get_object_or_404(UploadSession, session_id=data.get('session_id'),
+                                owner=request.user,
+                                status=UploadSession.STATUS_UPLOADING)
+    session.cleanup()
+    session.status = UploadSession.STATUS_CANCELLED
+    session.save(update_fields=['status'])
+    return JsonResponse({'ok': True})

@@ -4,38 +4,38 @@
 {% block title %}分享已过期 - 局域网网盘{% endblock %}
 
 {% block content %}
-<div class="row justify-content-center animate-fade-in">
-    <div class="col-md-6 col-lg-5">
-        <div class="card-modern">
-            <div class="card-header text-center">
-                <h4 class="mb-0"><i class="fas fa-clock me-2"></i>分享链接已过期</h4>
+<div class="flex items-center" style="min-height: calc(100vh - 120px);">
+    <div class="card mx-auto animate-fade-in" style="max-width: 440px; width: 100%;">
+        <div class="card-header">
+            <div class="card-title w-full justify-center">
+                <i class="fas fa-clock"></i>分享链接已过期
             </div>
-            <div class="card-body text-center">
-                <div class="empty-state">
-                    <div class="empty-state-icon">
-                        <i class="fas fa-history"></i>
-                    </div>
-                    <h4>抱歉，此分享链接已过期</h4>
-                    <p>您尝试访问的分享链接已经过期，无法继续访问。</p>
+        </div>
+        <div class="card-body text-center">
+            <div class="empty-state">
+                <div class="empty-icon">
+                    <i class="fas fa-history"></i>
                 </div>
-                
-                <div class="alert alert-modern alert-info text-start">
-                    <i class="fas fa-info-circle me-2"></i>
-                    分享链接信息：
-                    <ul class="list-unstyled mt-2 mb-0">
-                        <li class="mb-1">文件名：<strong>{{ share.file.original_name }}</strong></li>
-                        <li>过期时间：{{ share.expires_at|date:"Y-m-d H:i" }}</li>
-                    </ul>
+                <div class="empty-title">抱歉，此分享链接已过期</div>
+                <div class="empty-desc">您尝试访问的分享链接已经过期，无法继续访问。</div>
+            </div>
+
+            <div class="alert alert-info text-sm" style="text-align: left;">
+                <i class="fas fa-circle-info"></i>
+                <div>
+                    <div class="font-medium mb-2">分享链接信息：</div>
+                    <div class="mb-1">文件名：<strong>{{ share.file.original_name }}</strong></div>
+                    <div>过期时间：{{ share.expires_at|date:"Y-m-d H:i" }}</div>
                 </div>
-                
-                <div class="mt-4 d-flex flex-wrap gap-2 justify-content-center">
-                    <a href="{% url 'accounts:login' %}" class="btn btn-primary-modern btn-modern">
-                        <i class="fas fa-sign-in-alt me-1"></i> 登录系统
-                    </a>
-                    <a href="/" class="btn btn-outline-modern btn-modern">
-                        <i class="fas fa-home me-1"></i> 返回首页
-                    </a>
-                </div>
+            </div>
+
+            <div class="flex gap-2 justify-center mt-4">
+                <a href="{% url 'accounts:login' %}" class="btn btn-primary">
+                    <i class="fas fa-right-to-bracket"></i> 登录系统
+                </a>
+                <a href="/" class="btn btn-secondary">
+                    <i class="fas fa-home"></i> 返回首页
+                </a>
             </div>
         </div>
     </div>

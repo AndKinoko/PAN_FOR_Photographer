@@ -3,36 +3,41 @@
 {% block title %}文件搜索 - 局域网网盘{% endblock %}
 
 {% block breadcrumb %}
-<nav aria-label="breadcrumb" class="breadcrumb-modern">
-    <ol class="breadcrumb">
-        <li class="breadcrumb-item">
-            <a href="{% url 'storage:file_list' %}">
-                <i class="fas fa-home"></i> 首页
-            </a>
-        </li>
-        <li class="breadcrumb-item active">文件搜索</li>
-    </ol>
+<nav class="breadcrumb">
+    <a href="{% url 'storage:file_list' %}"><i class="fas fa-home"></i> 首页</a>
+    <span class="sep"><i class="fas fa-chevron-right"></i></span>
+    <span class="current">文件搜索</span>
 </nav>
 {% endblock %}
 
 {% block content %}
-<div class="row animate-fade-in">
-    <div class="col-md-4">
-        <div class="card-modern mb-4">
+<div class="page-header">
+    <div class="page-title-wrap">
+        <div class="page-title">文件搜索</div>
+        <div class="page-subtitle">搜索您的文件和文件夹</div>
+    </div>
+</div>
+
+<div class="flex gap-4 animate-fade-in search-layout" style="align-items: flex-start;">
+    <!-- 左侧搜索条件 -->
+    <div class="search-sidebar" style="width: 300px; flex-shrink: 0;">
+        <div class="card mb-4">
             <div class="card-header">
-                <h5 class="mb-0"><i class="fas fa-search me-2"></i>搜索条件</h5>
+                <div class="card-title">
+                    <i class="fas fa-search"></i>搜索条件
+                </div>
             </div>
             <div class="card-body">
                 <form method="get" action="{% url 'search:search_files' %}">
-                    <div class="mb-3">
-                        <label for="q" class="form-label-modern">搜索关键词</label>
-                        <input type="text" class="form-control-modern w-100" id="q" name="q" 
+                    <div class="form-group">
+                        <label for="q" class="form-label">搜索关键词</label>
+                        <input type="text" class="form-input" id="q" name="q"
                                value="{{ query }}" placeholder="输入文件名或文件夹名">
                     </div>
-                    
-                    <div class="mb-3">
-                        <label for="type" class="form-label-modern">文件类型</label>
-                        <select class="form-control-modern w-100" id="type" name="type">
+
+                    <div class="form-group">
+                        <label for="type" class="form-label">文件类型</label>
+                        <select class="form-select" id="type" name="type">
                             <option value="">所有类型</option>
                             {% for type in file_types %}
                             <option value="{{ type }}" {% if file_type == type %}selected{% endif %}>
@@ -41,71 +46,70 @@
                             {% endfor %}
                         </select>
                     </div>
-                    
-                    <div class="d-grid">
-                        <button type="submit" class="btn btn-primary-modern btn-modern">
-                            <i class="fas fa-search me-2"></i>开始搜索
-                        </button>
-                    </div>
+
+                    <button type="submit" class="btn btn-primary btn-block">
+                        <i class="fas fa-search"></i>开始搜索
+                    </button>
                 </form>
             </div>
         </div>
-        
-        <div class="card-modern">
+
+        <div class="card">
             <div class="card-body">
-                <h6><i class="fas fa-lightbulb text-warning me-2"></i>搜索提示</h6>
-                <ul class="small mb-0">
-                    <li>支持按文件名和原文件名搜索</li>
-                    <li>支持按文件类型过滤</li>
-                    <li>搜索不区分大小写</li>
+                <div class="font-semibold mb-3 flex items-center gap-2">
+                    <i class="fas fa-lightbulb" style="color: var(--warning);"></i>搜索提示
+                </div>
+                <ul class="text-sm text-secondary" style="padding-left: 18px; margin: 0;">
+                    <li class="mb-1">支持按文件名和原文件名搜索</li>
+                    <li class="mb-1">支持按文件类型过滤</li>
+                    <li class="mb-1">搜索不区分大小写</li>
                     <li>可以搜索文件夹名称</li>
                 </ul>
             </div>
         </div>
     </div>
-    
-    <div class="col-md-8">
-        <div class="card-modern">
+
+    <!-- 右侧搜索结果 -->
+    <div style="flex: 1; min-width: 0;">
+        <div class="card">
             <div class="card-header">
-                <h5 class="mb-0">
-                    <i class="fas fa-search-result me-2"></i>
+                <div class="card-title">
+                    <i class="fas fa-magnifying-glass"></i>
                     搜索结果
                     {% if query %}
-                    <small class="text-muted">"{{ query }}"</small>
+                    <span class="text-muted text-sm">"{{ query }}"</span>
                     {% endif %}
-                </h5>
+                </div>
             </div>
             <div class="card-body">
                 {% if query %}
-                    <!-- Folders results -->
+                    <!-- 文件夹结果 -->
                     {% if results.folders %}
-                    <div class="mb-4">
-                        <h6 class="border-bottom pb-2" style="border-color: rgba(99,102,241,0.08) !important;">
-                            <i class="fas fa-folder text-warning me-2"></i>
+                    <div class="mb-5">
+                        <div class="font-semibold mb-3 flex items-center gap-2" style="padding-bottom: 8px; border-bottom: 1px solid var(--border-subtle);">
+                            <i class="fas fa-folder" style="color: var(--warning);"></i>
                             文件夹 ({{ results.folders|length }})
-                        </h6>
-                        <div class="row">
+                        </div>
+                        <div class="flex gap-3" style="flex-wrap: wrap;">
                             {% for folder in results.folders %}
-                            <div class="col-md-6 mb-3">
-                                <div class="card-modern h-100">
-                                    <div class="card-body">
-                                        <div class="d-flex align-items-center">
-                                            <div class="file-icon-wrapper default me-3">
-                                                <i class="fas fa-folder text-warning"></i>
-                                            </div>
-                                            <div>
-                                                <h6 class="mb-1">{{ folder.name }}</h6>
-                                                <small class="text-muted">
-                                                    创建于 {{ folder.created_at|date:"Y-m-d" }}
-                                                </small>
+                            <div class="card card-hover" style="width: calc(50% - 6px); min-width: 200px;">
+                                <div class="card-body">
+                                    <div class="flex items-center gap-3">
+                                        <div class="file-icon folder">
+                                            <i class="fas fa-folder"></i>
+                                        </div>
+                                        <div style="min-width: 0; flex: 1;">
+                                            <div class="font-medium truncate">{{ folder.name }}</div>
+                                            <div class="text-xs text-muted mt-1">
+                                                创建于 {{ folder.created_at|date:"Y-m-d" }}
                                             </div>
                                         </div>
-                                        <div class="mt-3">
-                                            <a href="{% url 'storage:file_list' folder_id=folder.id %}" 
-                                               class="btn btn-outline-modern btn-modern btn-sm">
-                                                <i class="fas fa-folder-open me-1"></i>打开文件夹
-                                            </a>
-                                        </div>
+                                    </div>
+                                    <div class="mt-3">
+                                        <a href="{% url 'storage:file_list' folder_id=folder.id %}"
+                                           class="btn btn-secondary btn-sm w-full">
+                                            <i class="fas fa-folder-open"></i>打开文件夹
+                                        </a>
                                     </div>
                                 </div>
                             </div>
@@ -113,16 +117,16 @@
                         </div>
                     </div>
                     {% endif %}
-                    
-                    <!-- Files results -->
+
+                    <!-- 文件结果 -->
                     {% if results.files %}
                     <div>
-                        <h6 class="border-bottom pb-2" style="border-color: rgba(99,102,241,0.08) !important;">
-                            <i class="fas fa-file text-primary me-2"></i>
+                        <div class="font-semibold mb-3 flex items-center gap-2" style="padding-bottom: 8px; border-bottom: 1px solid var(--border-subtle);">
+                            <i class="fas fa-file" style="color: var(--accent);"></i>
                             文件 ({{ results.files|length }})
-                        </h6>
-                        <div class="table-responsive">
-                            <table class="table table-modern">
+                        </div>
+                        <div class="table-wrapper">
+                            <table class="table table-mobile">
                                 <thead>
                                     <tr>
                                         <th>文件名</th>
@@ -135,15 +139,15 @@
                                 <tbody>
                                     {% for file in results.files %}
                                     <tr>
-                                        <td>
-                                            <div class="d-flex align-items-center">
-                                                <div class="file-icon-wrapper 
+                                        <td data-label="文件名" data-full>
+                                            <div class="flex items-center gap-3">
+                                                <div class="file-icon
                                                     {% if file.file_type == 'pdf' %}pdf
                                                     {% elif file.file_type in 'jpg,jpeg,png,gif,bmp' %}image
                                                     {% elif file.file_type in 'doc,docx' %}document
                                                     {% elif file.file_type in 'xls,xlsx' %}spreadsheet
                                                     {% elif file.file_type in 'zip,rar,7z' %}archive
-                                                    {% else %}default{% endif %} me-3">
+                                                    {% else %}default{% endif %}">
                                                     {% if file.file_type == 'pdf' %}
                                                     <i class="fas fa-file-pdf"></i>
                                                     {% elif file.file_type in 'jpg,jpeg,png,gif,bmp' %}
@@ -158,20 +162,20 @@
                                                     <i class="fas fa-file"></i>
                                                     {% endif %}
                                                 </div>
-                                                <div>
-                                                    <div class="fw-bold">{{ file.name }}</div>
-                                                    <small class="text-muted">原名: {{ file.original_name }}</small>
+                                                <div style="min-width: 0;">
+                                                    <div class="font-medium truncate">{{ file.name }}</div>
+                                                    <div class="text-xs text-muted truncate">原名: {{ file.original_name }}</div>
                                                 </div>
                                             </div>
                                         </td>
-                                        <td>
-                                            <span class="badge badge-modern" style="background: rgba(99,102,241,0.1); color: #6366f1;">{{ file.file_type|upper }}</span>
+                                        <td data-label="类型">
+                                            <span class="badge badge-accent">{{ file.file_type|upper }}</span>
                                         </td>
-                                        <td>{{ file.formatted_size }}</td>
-                                        <td>{{ file.uploaded_at|date:"Y-m-d H:i" }}</td>
-                                        <td>
-                                            <a href="{% url 'storage:file_download' file_id=file.id %}" 
-                                               class="btn btn-outline-modern btn-modern btn-sm" title="下载">
+                                        <td data-label="大小">{{ file.formatted_size }}</td>
+                                        <td data-label="上传时间">{{ file.uploaded_at|date:"Y-m-d H:i" }}</td>
+                                        <td data-label="操作">
+                                            <a href="{% url 'storage:file_download' file_id=file.id %}"
+                                               class="btn btn-secondary btn-sm btn-icon" title="下载">
                                                 <i class="fas fa-download"></i>
                                             </a>
                                         </td>
@@ -182,25 +186,25 @@
                         </div>
                     </div>
                     {% endif %}
-                    
-                    <!-- No results -->
+
+                    <!-- 无结果 -->
                     {% if not results.folders and not results.files %}
                     <div class="empty-state">
-                        <div class="empty-state-icon">
+                        <div class="empty-icon">
                             <i class="fas fa-search"></i>
                         </div>
-                        <h4>未找到匹配的结果</h4>
-                        <p>请尝试其他关键词或文件类型</p>
+                        <div class="empty-title">未找到匹配的结果</div>
+                        <div class="empty-desc">请尝试其他关键词或文件类型</div>
                     </div>
                     {% endif %}
                 {% else %}
-                <!-- Initial state -->
+                <!-- 初始状态 -->
                 <div class="empty-state">
-                    <div class="empty-state-icon">
+                    <div class="empty-icon">
                         <i class="fas fa-search"></i>
                     </div>
-                    <h4>输入关键词开始搜索</h4>
-                    <p>搜索您的文件和文件夹</p>
+                    <div class="empty-title">输入关键词开始搜索</div>
+                    <div class="empty-desc">搜索您的文件和文件夹</div>
                 </div>
                 {% endif %}
             </div>
